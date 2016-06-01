@@ -1,18 +1,18 @@
 {
 	"name": "nobox",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"main": "server/core.js",
 	"bin": {
-		"nobox": "./bin/cli.js"
+		"nobox": "node ./bin/cli.js"
 	},
 	"author": {
 		"name": "Li",
 		"email": "61114579@qq.com"
 	},
 	"license": "MIT",
-	"description": "nova is a node framework",
+	"description": "nobox is a node framework",
 	"keywords": [
-		"nova",
+		"nobox",
 		"node",
 		"framework",
 		"server",
