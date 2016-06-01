@@ -1,9 +1,9 @@
 {
 	"name": "nobox",
-	"version": "0.2.5",
+	"version": "0.2.6",
 	"main": "server/core.js",
 	"bin": {
-		"nobox": "node ./bin/cli.js"
+		"nobox": "./bin/cli.js"
 	},
 	"author": {
 		"name": "Li",
