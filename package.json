@@ -1,21 +1,24 @@
 {
-	"name": "nobox",
-	"version": "0.2.7",
-	"main": "server/core.js",
-	"bin": {
-		"nobox": "./bin/cli.js"
-	},
-	"author": {
-		"name": "Li",
-		"email": "61114579@qq.com"
-	},
-	"license": "MIT",
-	"description": "nobox is a node framework",
-	"keywords": [
-		"nobox",
-		"node",
-		"framework",
-		"server",
-		"socket"
-	]
+  "name": "nobox",
+  "version": "0.2.8",
+  "main": "server/core.js",
+  "bin": {
+    "nobox": "./bin/cli.js"
+  },
+  "author": {
+    "name": "Li",
+    "email": "61114579@qq.com"
+  },
+  "license": "MIT",
+  "description": "nobox is a node framework",
+  "keywords": [
+    "nobox",
+    "node",
+    "framework",
+    "server",
+    "socket"
+  ],
+  "dependencies": {
+    "mongodb": "^2.1.21"
+  }
 }

@@ -4,7 +4,7 @@ var fs = require("fs");
 var os = require("os");
 var cp = require("child_process");
 var server = require("../http/core");
-var ex = req("../core/ex");
+var ex = require("../core/ex");
 var pk = require("../package.json");
 
 var currentOs = os.platform();
