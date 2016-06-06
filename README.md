@@ -6,3 +6,9 @@
     <li>转发服务器</li>
     <li>socket服务器</li>
 </ul>
+
+
+gitignore忽略配置文件设置:
+git rm -r --cached .
+git add .
+git commit -m 'update .gitignore'
