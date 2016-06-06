@@ -1,6 +1,6 @@
 {
   "name": "nobox",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "server/core.js",
   "bin": {
     "nobox": "./bin/cli.js"
@@ -19,6 +19,6 @@
     "socket"
   ],
   "dependencies": {
-    "mongodb": "^2.1.21"
+
   }
 }
