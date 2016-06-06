@@ -3,12 +3,14 @@
 var fs = require("fs");
 var os = require("os");
 var cp = require("child_process");
-var server = require("../server/core");
+var server = require("../http/core");
+var ex = req("../core/ex");
 var pk = require("../package.json");
 
 var currentOs = os.platform();
 var argv = process.argv.slice(2);
 var cmd = argv.shift();
+var ip = ex.getIp();
 
 //启动
 if(cmd=="start") {
@@ -17,6 +19,7 @@ if(cmd=="start") {
 
 	var hasPath = false;
 	var args = {};
+    args.ip = ip;
 	argv.forEach(function(kv){
 		kv = kv.split("=");
 		var k = kv[0];
@@ -46,6 +49,11 @@ if(cmd=="start") {
 			hasPath = true;
 			server.addRemote(config.remote);
 		}
+		if(config.db){
+			hasPath = true;
+			server.addDb(config.db);
+		}
+
         server.crossDomain = config.crossDomain;
         server.startTip = config.startTip;
         server.port = config.port;

@@ -7,7 +7,7 @@
     "use strict";
 	var fs = req("fs");
     var mime = req("./mime");
-	var tp = req("../template");
+	var tp = req("../core/template");
 
     exp.paths = {};
     exp.dir = "/";          //静态目录

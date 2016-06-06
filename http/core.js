@@ -9,13 +9,13 @@
 	var url = req("url");
 	var fs = req("fs");
 
-	var str = req("../string");
-	var ex = req("../ex");
-	//var db = req("../db");
+	var str = req("../core/string");
+	var ex = req("../core/ex");
 
 	var params = req("./params");
 	var staticServer = req("./staticServer");
 	var remoteServer = req("./remoteServer");
+    var db = req("../db/mongo");
 
     //服务器
     var Server = function (Req, Res) {
@@ -46,6 +46,9 @@
                 return staticServer.parse(Req, Res,staticServer.paths[path]);
             }
         }
+        if(uri.path.indexOf(db.path)==0){
+            return db.parse(Req, Res);
+        }
     };
 
     //报错处理
@@ -64,13 +67,21 @@
         remoteServer.paths[ops.path] = ops;
     };
 
+    //添加远程服务
+    exp.addDb = function(ops) {
+        db.config = ops;
+    };
+
     //启动
     exp.start = function () {
-		var port = exp.port || 80;
-        staticServer.init();
-        remoteServer.init();
-        http.createServer(Server).listen(port).on("error", Error);
-        exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);
+        var doStart = function(){
+            var port = exp.port || 80;
+            staticServer.init();
+            remoteServer.init();
+            http.createServer(Server).listen(port).on("error", Error);
+            exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);
+        };
+        db.config.dbName ? db.init(doStart) : doStart();
     };
 
 })(require, exports);

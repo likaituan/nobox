@@ -5,9 +5,9 @@
 
 (function(req, exp) {
     "use strict";
-    var re = req("../re");
-    var str = req("../string");
-    var date = req("../date");
+    var re = req("../core/re");
+    var str = req("../core/string");
+    var date = req("../core/date");
 
     var Rules = req("./rules");
 

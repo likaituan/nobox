@@ -9,12 +9,12 @@
 	var qs = req("querystring");
 	var http = req("http");
 
-	var ex = req("../ex");
-    var str = req("../string");
-    var date = req("../date");
-
-    var val = req("./validate");
     var _params = req("./params");
+
+	var ex = req("../core/ex");
+    var str = req("../core/string");
+    var date = req("../core/date");
+    var val = req("../validate/validate");
 
     exp.paths = {};
     exp.serviceList = {};
