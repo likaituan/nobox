@@ -1,6 +1,6 @@
 {
   "name": "nobox",
-  "version": "0.3.0",
+  "version": "0.3.4",
   "main": "server/core.js",
   "bin": {
     "nobox": "./bin/cli.js"
@@ -8,6 +8,10 @@
   "author": {
     "name": "Li",
     "email": "61114579@qq.com"
+  },
+  "repository":{
+    "type": "git",
+    "url": "git@github.com:likaituan/nobox.git"
   },
   "license": "MIT",
   "description": "nobox is a node framework",

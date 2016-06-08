@@ -60,6 +60,12 @@ if(cmd=="start") {
         server.start();
     }else if (args.path) {
 		hasPath = true;
+        if(args.seekjs){
+            server.addStatic({
+                path: "/seekjs/",
+                dir: args.seekjs
+            });
+        }
         server.addStatic({
             path: "/",
             dir: args.path

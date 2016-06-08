@@ -4,7 +4,12 @@
 
 (function(req, exp) {
     "use strict";
-    var mongodb = req("mongodb").MongoClient;
+    var mongodb = {};
+    try{
+        mongodb = req("mongodb").MongoClient;
+    }catch(e){
+        console.log("you don't install mongodb");
+    }
 
     exp.db = null;
     exp.config = {};
