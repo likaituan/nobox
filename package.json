@@ -1,6 +1,6 @@
 {
   "name": "nobox",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "main": "server/core.js",
   "bin": {
     "nobox": "./bin/cli.js"
@@ -9,7 +9,7 @@
     "name": "Li",
     "email": "61114579@qq.com"
   },
-  "repository":{
+  "repository": {
     "type": "git",
     "url": "git@github.com:likaituan/nobox.git"
   },
@@ -22,7 +22,5 @@
     "server",
     "socket"
   ],
-  "dependencies": {
-
-  }
+  "dependencies": {}
 }
