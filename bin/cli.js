@@ -12,31 +12,35 @@ var argv = process.argv.slice(2);
 var cmd = argv.shift();
 var ip = ex.getIp();
 
+
+var hasPath = false;
+var args = {};
+args.ip = ip;
+argv.forEach(function(kv){
+    kv = kv.split("=");
+    var k = kv[0];
+    var v = kv[1];
+    if(kv.length==2){
+        args[k] = v;
+    }else{
+        args[k] = true;
+    }
+});
+
+var currentPath = process.cwd() + "/";
+var configFile = `${currentPath}${pk.name}.config.js`;
+var config = {};
+var hasFile = fs.existsSync(configFile);
+if(hasFile) {
+	config = require(configFile);
+    if(typeof config=="function"){
+        config = config(args);
+    }
+}
+
 //启动
 if(cmd=="start") {
-    var currentPath = process.cwd() + "/";
-    var configFile = `${currentPath}${pk.name}.config.js`;
-
-	var hasPath = false;
-	var args = {};
-    args.ip = ip;
-	argv.forEach(function(kv){
-		kv = kv.split("=");
-		var k = kv[0];
-		var v = kv[1];
-		if(kv.length==2){
-			args[k] = v;
-		}else{
-			args[k] = true;
-		}
-	});
-
-    var hasFile = fs.existsSync(configFile);
 	if(hasFile) {
-        var config = require(configFile);
-		if(typeof config=="function"){
-			config = config(args);
-		}
        	if(config.static){
 			hasPath = true;
 			if(config.static.items) {
@@ -91,6 +95,47 @@ if(cmd=="start") {
 //查看版本
 }else if(cmd=="-v"){
     console.log(pk.version);
+
+//登陆
+}else if(cmd=="login"){
+	var env = argv[0];
+	if(env) {
+        var pub = config.pub;
+        if(pub && pub.env) {
+            var ip = pub.env[env].ip;
+            var pw = args.password || pub.password && pub.password[env];
+            if(pw) {
+                cp.execSync(`sshpass -p ${pw} ssh -T root@${ip}`);
+            }else{
+                cp.execSync(`ssh -t -t root@${ip}`);
+            }
+        }else{
+            console.log("please setting publish option before!");
+        }
+	}else{
+		console.log("please select a environment before!");
+	}
+
+//发版
+}else if(cmd=="pub"){
+    var env = argv[0];
+    if(env) {
+        var pub = config.pub;
+        if(pub && pub.env) {
+            var ip = pub.env[env].ip;
+            var pw = args.password || pub.password && pub.password[env];
+            if(pw) {
+                cp.execSync(`sshpass -p ${pw} scp bin/pub.sh root@${ip}:${pub.remotePath}/pub.sh`);
+                //cp.execSync(`sshpass -p ${pw} ssh root@${ip}`);
+            }else{
+                cp.execSync(`ssh root@${ip}`);
+            }
+        }else{
+            console.log("please setting publish option before!");
+        }
+    }else{
+        console.log("please select a environment before!");
+    }
 
 }else{
     console.log(`welcome to ${pk.name}, ${pk.name} current version is ${pk.version}!`);
