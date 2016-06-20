@@ -10,12 +10,10 @@ var pk = require("../package.json");
 var currentOs = os.platform();
 var argv = process.argv.slice(2);
 var cmd = argv.shift();
-var ip = ex.getIp();
-
 
 var hasPath = false;
 var args = {};
-args.ip = ip;
+args.ip = ex.getIp();
 argv.forEach(function(kv){
     kv = kv.split("=");
     var k = kv[0];
@@ -51,7 +49,18 @@ if(cmd=="start") {
 		}
         if(config.remote){
 			hasPath = true;
-			server.addRemote(config.remote);
+            if(config.remote.items) {
+                config.remote.items.forEach(function(item) {
+                    for(var k in config.remote) {
+                        if(k!=="items" && item[k]===undefined) {
+                            item[k] = config.remote[k];
+                        }
+                    }
+                    server.addRemote(item);
+                });
+            }else{
+                server.addRemote(config.remote);
+            }
 		}
 		if(config.db){
 			hasPath = true;
@@ -120,18 +129,24 @@ if(cmd=="start") {
 }else if(cmd=="pub"){
     var env = argv[0];
     if(env) {
-        var pub = config.pub;
-        if(pub && pub.env) {
-            var ip = pub.env[env].ip;
-            var pw = args.password || pub.password && pub.password[env];
-            if(pw) {
-                cp.execSync(`sshpass -p ${pw} scp bin/pub.sh root@${ip}:${pub.remotePath}/pub.sh`);
-                //cp.execSync(`sshpass -p ${pw} ssh root@${ip}`);
-            }else{
-                cp.execSync(`ssh root@${ip}`);
-            }
+        if(env=="init") {
+            console.log("sorry, environment name cannot named 'init'!");
         }else{
-            console.log("please setting publish option before!");
+            var ops = config.pub;
+            if (ps && ops.env) {
+                var ip = ops.env[env].ip;
+                if (args.init) {
+                    var source = __dirname + "/pub.sh";
+                    cp.execSync(`scp ${source} root@${ip}:${ops.remotePath}/pub.sh`);
+                    console.log("publish init success!");
+                } else {
+                    var tarFile = "";
+                    cp.execSync(`scp ${tarFile} root@${ip}:${ops.remotePath}/${tarFile}`);
+                    cp.execSync(`ssh root@${ip}:${ops.remotePath}/pub.sh`);
+                }
+            } else {
+                console.log("please setting publish option before!");
+            }
         }
     }else{
         console.log("please select a environment before!");
