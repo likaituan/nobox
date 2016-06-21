@@ -31,7 +31,6 @@
             return;
         }
         Res.writeHead(200,resJson);
-        console.log("resJson=",resJson);
 
 		var uri = url.parse(Req.url);
         for(var path in remoteServer.paths){
