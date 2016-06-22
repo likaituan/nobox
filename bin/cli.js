@@ -127,22 +127,32 @@ if(cmd=="start") {
 
 //发版
 }else if(cmd=="pub"){
-    var env = argv[0];
-    if(env) {
-        if(env=="init") {
+    args.env = argv[0];
+    if(args.env) {
+        if(args.env=="init") {
             console.log("sorry, environment name cannot named 'init'!");
         }else{
-            var ops = config.pub;
-            if (ps && ops.env) {
-                var ip = ops.env[env].ip;
+            var ops = typeof(config.pub)=="function" ? config.pub(args) : config.pub;
+
+            var ip = ops.remoteIp;
+            var dir = ops.remoteDir;
+            if (ip && dir) {
+                var user = ops.remoteUser || "root";
+                var port = ops.remotePort || config.port;
                 if (args.init) {
-                    var source = __dirname + "/pub.sh";
-                    cp.execSync(`scp ${source} root@${ip}:${ops.remotePath}/pub.sh`);
+                    var pubScript = __dirname + "/pub.sh";
+                    cp.execSync(`scp -p ${pubScript} ${user}@${ip}:${dir}/pub.sh`);
                     console.log("publish init success!");
                 } else {
-                    var tarFile = "";
-                    cp.execSync(`scp ${tarFile} root@${ip}:${ops.remotePath}/${tarFile}`);
-                    cp.execSync(`ssh root@${ip}:${ops.remotePath}/pub.sh`);
+                    config.publishBefore && config.publishBefore(args);
+                    var tarFile = `${ops.tarPath}/${ops.tarFile}`;
+
+                    var text1 = cp.execSync(`tar -zcf ${tarFile} ${ops.tarSource}`).toString();
+                    console.log(text1);
+                    var text2 = cp.execSync(`scp ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`).toString();
+                    console.log(text2);
+                    var text3 = cp.execSync(`ssh ${user}@${ip} "sh ${dir}/pub.sh ${port}"`).toString();
+                    console.log(text3);
                 }
             } else {
                 console.log("please setting publish option before!");
