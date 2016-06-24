@@ -139,20 +139,41 @@ if(cmd=="start") {
             if (ip && dir) {
                 var user = ops.remoteUser || "root";
                 var port = ops.remotePort || config.port;
+                var pubClient = __dirname + "/pub_client.sh";
+                var pubServer = __dirname + "/pub_server.sh";
                 if (args.init) {
-                    var pubScript = __dirname + "/pub.sh";
-                    cp.execSync(`scp -p ${pubScript} ${user}@${ip}:${dir}/pub.sh`);
+                    cp.execSync(`scp -p ${pubServer} ${user}@${ip}:${dir}/pub.sh`);
                     console.log("publish init success!");
                 } else {
                     config.publishBefore && config.publishBefore(args);
                     var tarFile = `${ops.tarPath}/${ops.tarFile}`;
 
-                    var text1 = cp.execSync(`tar -zcf ${tarFile} ${ops.tarSource}`).toString();
-                    console.log(text1);
-                    var text2 = cp.execSync(`scp ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`).toString();
-                    console.log(text2);
-                    var text3 = cp.execSync(`ssh ${user}@${ip} "sh ${dir}/pub.sh ${port}"`).toString();
-                    console.log(text3);
+                    var showTip = function(tag,err,stderr){
+                        if(err) {
+                            console.log(`${tag} error: ${stderr}`);
+                            return false;
+                        } else {
+                            console.log(`${tag} success!`);
+                            return true;
+                        }
+                    };
+                    cp.exec(`tar -zcf ${tarFile} ${ops.tarSource}`, function(err,stdout,stderr){
+                        showTip("pack",err,stderr) && cp.exec(`scp ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`, function(err,stdout,stderr){
+                            showTip("upload",err,stderr) && cp.exec(`ssh ${user}@${ip} "sh ${dir}/pub.sh ${port}"`, function(err,stdout,stderr){
+                                showTip("publish",err,stderr);
+                            });
+                        });
+                    });
+
+                    /*
+                    cp.execFile(pubClient, [tarFile,ops.tarSource,user,ip,port,dir], null, function(err, stdout, stderr) {
+                        if(err) {
+                            console.log('publish client error:'+stderr);
+                        } else {
+                            console.log(stdout);
+                        }
+                    });
+                    */
                 }
             } else {
                 console.log("please setting publish option before!");
