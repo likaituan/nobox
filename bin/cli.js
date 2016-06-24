@@ -68,6 +68,7 @@ if(cmd=="start") {
 		}
 
         server.crossDomain = config.crossDomain;
+        server.forever = config.forever;
         server.startTip = config.startTip;
         server.port = config.port;
         server.start();

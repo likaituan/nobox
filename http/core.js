@@ -17,22 +17,28 @@
 	var remoteServer = req("./remoteServer");
     var db = req("../db/mongo");
 
+
+    //服务器加壳
+    var globalRes;
+    var ServerBox = function (Req, Res) {
+        globalRes = Res;
+        try {
+            Server(Req, Res);
+        } catch (e) {
+            console.log("Exceptional Server!");
+            console.log(e.toString);
+            Res.end();
+        }
+    };
+
     //服务器
     var Server = function (Req, Res) {
-        var resJson = {};
-        resJson["Content-Type"] = "text/html;charset=utf-8";
-        if(exp.crossDomain){
-            resJson["Access-Control-Allow-Origin"] = exp.crossDomain;
-            resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
-            resJson["Access-Control-Allow-Methods"] = "GET,POST";//"PUT,POST,GET,DELETE,OPTIONS";
-        }
         if(Req.method=="OPTIONS" && Res.send){
             Res.send(200);
             return;
         }
-        Res.writeHead(200,resJson);
 
-		var uri = url.parse(Req.url);
+        var uri = url.parse(Req.url);
         for(var path in remoteServer.paths){
             if(uri.path.indexOf(path)==0){
                 return remoteServer.parse(Req, Res,remoteServer.paths[path]);
@@ -78,9 +84,17 @@
             var port = exp.port || 80;
             staticServer.init();
             remoteServer.init();
-            http.createServer(Server).listen(port).on("error", Error);
+            http.createServer(ServerBox).listen(port).on("error", Error);
             exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);
         };
+        exp.forever && process.on('uncaughtException', function (err) {
+            //打印出错误
+            console.log(err);
+            //打印出错误的调用栈方便调试
+            console.log(err.stack);
+            globalRes && globalRes.end();
+        });
+
         db.config.dbName ? db.init(doStart) : doStart();
     };
 

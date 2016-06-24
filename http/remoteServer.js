@@ -55,6 +55,16 @@
 
 	//转发远程
     exp.parse = function (Req, Res, item) {
+
+        var resJson = {};
+        resJson["Content-Type"] = "text/html;charset=utf-8";
+        if(exp.crossDomain){
+            resJson["Access-Control-Allow-Origin"] = exp.crossDomain;
+            resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
+            resJson["Access-Control-Allow-Methods"] = "GET,POST";//"PUT,POST,GET,DELETE,OPTIONS";
+        }
+        Res.writeHead(200,resJson);
+
         var re = new RegExp("^"+item.path,"i");
         var url = Req.url.replace(re, "").split("/");
         var serviceList = exp.serviceList[item.path];
