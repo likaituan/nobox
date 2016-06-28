@@ -1,5 +1,8 @@
 #! /bin/bash
 
+currentPath=`dirname $0`
+cd $currentPath
+
 if [ -d bin/ ]; then
 	rm -rf bin/
 fi

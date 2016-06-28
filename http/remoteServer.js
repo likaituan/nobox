@@ -55,11 +55,10 @@
 
 	//转发远程
     exp.parse = function (Req, Res, item) {
-
         var resJson = {};
         resJson["Content-Type"] = "text/html;charset=utf-8";
-        if(exp.crossDomain){
-            resJson["Access-Control-Allow-Origin"] = exp.crossDomain;
+        if(item.crossDomain){
+            resJson["Access-Control-Allow-Origin"] = item.crossDomain;
             resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
             resJson["Access-Control-Allow-Methods"] = "GET,POST";//"PUT,POST,GET,DELETE,OPTIONS";
         }

@@ -67,7 +67,6 @@ if(cmd=="start") {
 			server.addDb(config.db);
 		}
 
-        server.crossDomain = config.crossDomain;
         server.forever = config.forever;
         server.startTip = config.startTip;
         server.port = config.port;
@@ -160,7 +159,8 @@ if(cmd=="start") {
                     };
                     cp.exec(`tar -zcf ${tarFile} ${ops.tarSource}`, function(err,stdout,stderr){
                         showTip("pack",err,stderr) && cp.exec(`scp ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`, function(err,stdout,stderr){
-                            showTip("upload",err,stderr) && cp.exec(`ssh ${user}@${ip} "sh ${dir}/pub.sh ${port}"`, function(err,stdout,stderr){
+                            //showTip("upload",err,stderr) && cp.exec(`ssh ${user}@${ip} "sh ${dir}/pub.sh ${port}"`, function(err,stdout,stderr){
+                            showTip("upload",err,stderr) && cp.exec(`ssh ${user}@${ip} "cd ${dir} && nobox pub_server port=${port}"`, function(err,stdout,stderr){
                                 showTip("publish",err,stderr);
                             });
                         });
@@ -183,6 +183,17 @@ if(cmd=="start") {
     }else{
         console.log("please select a environment before!");
     }
+
+//发版
+}else if(cmd=="pub_server"){
+    var sh_server = __dirname + "/pub_server.sh";
+     cp.execFile(sh_server, [args.port], null, function(err, stdout, stderr) {
+         if(err) {
+            console.log('publish client error:'+stderr);
+         } else {
+            console.log(stdout);
+         }
+     });
 
 }else{
     console.log(`welcome to ${pk.name}, ${pk.name} current version is ${pk.version}!`);
