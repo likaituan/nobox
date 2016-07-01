@@ -17,12 +17,14 @@
     exports.getIp = function(){
         try{
             var ips = os.networkInterfaces();
-            for(var i in ips) {
-                var a = ips[i];
-                for(var j=0; j<a.length; j++){
-                    var o = a[j];
-                    if(o.family == "IPv4" && o.internal===false){
-                        return o.address;
+            for(var k in ips) {
+                if(/en|eth/.test(k)) {
+                    var a = ips[k];
+                    for (var j = 0; j < a.length; j++) {
+                        var o = a[j];
+                        if (o.family == "IPv4" && o.internal === false) {
+                            return o.address;
+                        }
                     }
                 }
             }

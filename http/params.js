@@ -11,7 +11,7 @@
 	//获取参数
     exp.getParams = function(Req, Res, callback){
         if(Req.method == "OPTIONS"){
-            Res.end('{"code":-99,"message":"取不到数据"}');
+            //Res.end('{"code":-99,"message":"取不到数据"}');
             //callback({});
         }else if(Req.method == "GET"){
             var params = url.parse(Req.url,true).query;

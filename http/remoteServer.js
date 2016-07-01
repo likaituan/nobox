@@ -59,10 +59,20 @@
         resJson["Content-Type"] = "text/html;charset=utf-8";
         if(item.crossDomain){
             resJson["Access-Control-Allow-Origin"] = item.crossDomain;
-            resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
-            resJson["Access-Control-Allow-Methods"] = "GET,POST";//"PUT,POST,GET,DELETE,OPTIONS";
+            resJson["Access-Control-Allow-Credentials"] = false;
+            //resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
+            resJson["Access-Control-Allow-Headers"] = "userId,sessionId,X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+            resJson["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";//"PUT,POST,GET,DELETE,OPTIONS";
         }
         Res.writeHead(200,resJson);
+        if(Req.method=="OPTIONS"){
+            console.log("send=",Res.send);
+            //Res.send(200);
+            //global.httpx.abort();
+            Res.end();
+            //Res.end('{"code":-99,"message":"取不到数据"}');
+            return;
+        }
 
         var re = new RegExp("^"+item.path,"i");
         var url = Req.url.replace(re, "").split("/");

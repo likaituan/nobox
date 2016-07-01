@@ -8,6 +8,7 @@
 	var fs = req("fs");
     var mime = req("./mime");
 	var tp = req("../core/template");
+    var pk = require("../package.json");
     var zlib = require('zlib');
 
     exp.paths = {};
@@ -63,24 +64,27 @@
         });
         */
 
+        var res_headers = {};
+        res_headers["Server"] = `${pk.name}/${pk.version}`;
+        
         var fullFile = item.dir + file;
         var existFile = fs.existsSync(fullFile);
         if(existFile) {
             var gzipStream = zlib.createGzip();
-            var resJson = {};
-            resJson["Content-Type"] = `${mimeType};charset=utf-8`;
+            res_headers["Content-Type"] = `${mimeType};charset=utf-8`;
 
             var stream = fs.createReadStream(fullFile);
             if (isGzip) {
-                resJson["Content-Encoding"] = "gzip";
-                Res.writeHead(200, resJson);
+                res_headers["Content-Encoding"] = "gzip";
+                Res.writeHead(200, res_headers);
                 stream.pipe(gzipStream).pipe(Res);
             } else {
-                Res.writeHead(200, resJson);
+                Res.writeHead(200, res_headers);
                 stream.pipe(Res);
             }
         }else {
-            Res.writeHead(404, {'Content-Type': 'text/plain'});
+            res_headers["Content-Type"] = "text/plain;charset=utf-8";
+            Res.writeHead(404, res_headers);
             Res.end("file is not found!");
         }
 
