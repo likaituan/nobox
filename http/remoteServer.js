@@ -28,7 +28,11 @@
                     item.validate = {rule: item.validate};
                 }
                 if(item.validate.lang) {
-                    val.tip = val.tips[item.validate.lang];
+                    if(item.validate.langFile){
+                        val.tip = item.validate.langFile;
+                    }else {
+                        val.tip = val.tips[item.validate.lang];
+                    }
                 }
             }else{
                 item.validate = {};
@@ -66,7 +70,7 @@
         }
         Res.writeHead(200,resJson);
         if(Req.method=="OPTIONS"){
-            console.log("send=",Res.send);
+            //console.log("send=",Res.send);
             //Res.send(200);
             //global.httpx.abort();
             Res.end();
