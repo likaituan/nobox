@@ -24,15 +24,18 @@ module.exports = {
 
     //字符串长度
     len: "{0} length is wrong",
-    minLen: "{0} length cannon less than {1}",
-    maxLen: "{0} length cannon more than {1}",
+    minLen: "{0} length cannon less than {1}{2}",
+    maxLen: "{0} length cannon more than {1}{2}",
 
     //字节长度
     byte: "{0} only has {1} chinese or {2} english",
-    minByte: "{0} length cannon less than {1} chinese or {2} english",
-    maxByte: "{0} length cannon more than {1} chinese or {2} english",
+    minByte: "{0} length cannon less than {1} double byte or {2} single byte",
+    maxByte: "{0} length cannon more than {1} double byte or {2} single byte",
 
     //日期
     minDate: "{0} cannon less than {1} days",
-    maxDate: "{0} cannon more than{1} days"
+    maxDate: "{0} cannon more than {1} days",
+
+    //是否一致
+    diff: "Two times the password is not consistent"
 };

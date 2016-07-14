@@ -139,34 +139,39 @@ if(cmd=="start") {
 }else if(cmd=="pub"){
     args.env = argv[0];
     if(args.env) {
-        if(args.env=="init") {
-            console.log("sorry, environment name cannot named 'init'!");
-        }else{
-            var ops = typeof(config.pub)=="function" ? config.pub(args) : config.pub;
+        var ops = typeof(config.pub)=="function" ? config.pub(args) : config.pub;
+        ops = ops || {};
+        var ip = ops.remoteIp;
+        var dir = ops.remoteDir;
+        if (ip && dir) {
+            var user = ops.remoteUser || "root";
+            var port = ops.remotePort || config.port;
 
-            var ip = ops.remoteIp;
-            var dir = ops.remoteDir;
-            if (ip && dir) {
-                var user = ops.remoteUser || "root";
-                var port = ops.remotePort || config.port;
-                var pubClient = __dirname + "/pub_client.sh";
-                var pubServer = __dirname + "/pub_server.sh";
+            config.onPubBefore && config.onPubBefore(args,cp.execSync);
+            var tarFile = "bin.tar.gz";
 
-                config.publishBefore && config.publishBefore(args);
-                var tarFile = "bin.tar.gz";
-
-                cp.exec(`tar -zcf ${tarFile} ${ops.tarSource}`, function(err,stdout,stderr){
-                    showTip("pack",err,stderr) && cp.exec(`scp ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`, function(err,stdout,stderr){
-                        cp.execSync(`rm -rf ${tarFile}`);
-                        showTip("upload",err,stderr) && cp.execFile(pubClient, [user,ip,port,dir], null, function(err,stdout,stderr){
+            cp.exec(`tar -zcf ${tarFile} ${ops.tarSource}`, function(err,stdout,stderr){
+                var sshArgs = "";
+                var keyPath = `sshkeys/${args.env}.key`;
+                if(fs.existsSync(keyPath)){
+                    sshArgs = `-i ${keyPath}`;
+                }
+                showTip("pack",err,stderr) && cp.exec(`scp ${sshArgs} ${tarFile} ${user}@${ip}:${dir}/bin.tar.gz`, function(err,stdout,stderr){
+                    cp.execSync(`rm -rf ${tarFile}`);
+                    if(showTip("upload",err,stderr)){
+                        var sshCmd = currentOs=="win32"
+                            ? `ssh ${sshArgs} ${user}@${ip} "sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${dir}"`
+                            : `ssh ${sshArgs} ${user}@${ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${dir}"`;
+                        //console.log(sshCmd);
+                        cp.exec(sshCmd, function(err,stdout,stderr){
                             showTip("publish",err,stderr);
                         });
-                    });
+                    }
                 });
+            });
 
-            } else {
-                console.log("please setting publish option before!");
-            }
+        } else {
+            console.log("please setting publish option before!");
         }
     }else{
         console.log("please select a environment before!");
@@ -186,3 +191,7 @@ if(cmd=="start") {
 }else{
     console.log(`welcome to ${pk.name}, ${pk.name} current version is ${pk.version}!`);
 }
+
+exports.start=function(a){
+    console.log(a);
+};

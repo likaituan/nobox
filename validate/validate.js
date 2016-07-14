@@ -58,13 +58,10 @@
                 return str.format(chkItems.empty_title||exp.tip.empty, title);
             }
             for (var k in chkItems) {
-                var v = exp.chkItem(title, val, k, chkItems[k], chkItems);
+                var v = exp.chkItem(title, val, k, chkItems[k], chkItems, params);
                 if (v !== true) {
                     return v;
                 }
-            }
-            if(o.diff && val!=params[o.diff]){
-                return "两次输入的密码不一致";
             }
         }
         return true;
@@ -78,7 +75,7 @@
      * @param n 检查项值
      * @returns {message|true}
      */
-    exp.chkItem = function(title, val, key, n, o){
+    exp.chkItem = function(title, val, key, n, o, params){
         var tip = exp.tip;
         //格式
         if(key=="number" && re.number.test(val)===false){
@@ -144,11 +141,14 @@
         }
 
         //字符串长度
+        if(key=="len" && val.length<n){
+            return str.format(tip.len, title, n);
+        }
         if(key=="minLen" && val.length<n){
-            return str.format(tip.minLen, title, n);
+            return str.format(tip.minLen, title, n, o.unit||"");
         }
         if(key=="maxLen" && val.length>n){
-            return str.format(tip.maxLen, title, n);
+            return str.format(tip.maxLen, title, n, o.unit||"");
         }
 
         //字节长度
@@ -168,6 +168,11 @@
         }
         if(key=="maxDate" && dayCount>n){
             return str.format(tip.maxDate, title, n);
+        }
+
+        //是否一致
+        if(key=="diff" && val!=params[o.diff]){
+            return tip.diff;
         }
 
         return true;
