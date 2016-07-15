@@ -65,7 +65,10 @@
             resJson["Access-Control-Allow-Origin"] = item.crossDomain;
             resJson["Access-Control-Allow-Credentials"] = false;
             //resJson["Access-Control-Allow-Headers"] = "userId,sessionId";//"X-Custom-Header";//"X-Requested-With";
-            resJson["Access-Control-Allow-Headers"] = "userId,sessionId,X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+            resJson["Access-Control-Allow-Headers"] = "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+            if(item.headerKeys){
+                resJson["Access-Control-Allow-Headers"] += "," + item.headerKeys.join(",");
+            }
             resJson["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";//"PUT,POST,GET,DELETE,OPTIONS";
         }
         Res.writeHead(200,resJson);

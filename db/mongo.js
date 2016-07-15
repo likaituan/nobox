@@ -7,9 +7,9 @@
     var mongodb = {};
     try{
         mongodb = req("mongodb").MongoClient;
-        console.log("you are already install mongodb");
+        console.log("you was already installed mongodb");
     }catch(e){
-        console.log("you don't install mongodb");
+        console.log("you was not installed mongodb");
     }
 
     exp.db = null;
