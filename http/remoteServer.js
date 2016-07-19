@@ -116,6 +116,19 @@
                     var v = Req.headers[key.toLowerCase()];
                     exp.session[key] = v=="undefined" ? undefined : v;
                 });
+
+                //针对mongodb
+                if(exp.db){
+                    fun(params, exp.session, exp.db, function(ret){
+                        Res.end(JSON.stringify({
+                            success: true,
+                            code:0,
+                            data: ret
+                        }));
+                    });
+                    return;
+                }
+
                 var ops = fun(params, exp.session);
                 if(typeof(ops)=="object" && ops.url) {
                     ops.url = str.format(ops.url, params); //地址栏格式化

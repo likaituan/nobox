@@ -1,4 +1,3 @@
-var fs = require("fs");
 var server = require("../http/core");
 var ex = require("./ex");
 

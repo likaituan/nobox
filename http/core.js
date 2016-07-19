@@ -79,10 +79,11 @@
 
     //启动
     exp.start = function () {
-        var doStart = function(){
+        var doStart = function(db){
             var port = exp.port || 80;
             staticServer.init();
             remoteServer.init();
+            remoteServer.db = db;
             global.httpx = http.createServer(ServerBox).listen(port).on("error", Error);
             exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);
         };
@@ -94,7 +95,7 @@
             globalRes && globalRes.end();
         });
 
-        exp.db ? db.init(doStart) : doStart();
+        exp.db ? exp.db.init(doStart) : doStart();
     };
 
 })(require, exports);
