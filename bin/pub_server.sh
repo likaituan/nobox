@@ -2,12 +2,13 @@
 
 port="$1"
 dir="$2"
+env="$3"
 
 #step1 - stop node
 
 pid=`ps -aux | grep nobox | grep start | grep port=$port | awk '{print $2}'`
 if [ "$pid" ]; then
-	kill $pid
+	kill -9 $pid
 fi
 
 cd $dir
@@ -28,4 +29,4 @@ tar -zxf bin.tar.gz -C bin/
 
 cd bin/
 noboxExeFile=`npm bin -g`/nobox
-nohup node $noboxExeFile start bin port=$port > 1.log 2>&1 &
+nohup node $noboxExeFile start node=$env java=$env port=$port --save > 1.log 2>&1 &

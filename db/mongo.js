@@ -1,6 +1,6 @@
-    /**
-     * 数据库API
-     */
+/**
+ * 数据库API
+ */
 
 (function(req, exp) {
     "use strict";

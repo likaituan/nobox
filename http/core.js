@@ -15,8 +15,6 @@
 	var params = req("./params");
 	var staticServer = req("./staticServer");
 	var remoteServer = req("./remoteServer");
-    var db = req("../db/mongo");
-
 
     //服务器加壳
     var globalRes;
@@ -75,7 +73,8 @@
 
     //添加远程服务
     exp.addDb = function(ops) {
-        db.config = ops;
+        exp.db = req("../db/mongo");
+        exp.db.config = ops;
     };
 
     //启动
@@ -95,7 +94,7 @@
             globalRes && globalRes.end();
         });
 
-        db.config.dbName ? db.init(doStart) : doStart();
+        exp.db ? db.init(doStart) : doStart();
     };
 
 })(require, exports);

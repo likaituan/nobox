@@ -1,6 +1,6 @@
 {
   "name": "nobox",
-  "version": "0.5.4",
+  "version": "0.5.9",
   "main": "server/core.js",
   "bin": {
     "nobox": "./bin/cli.js"
