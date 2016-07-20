@@ -17,6 +17,10 @@ module.exports = function(args, ops) {
         if (config.remote) {
             hasPath = true;
             if (config.remote.items) {
+                if(config.db){
+                    config.db.type = "mongodb";
+                    config.remote.items.push(config.db);
+                }
                 config.remote.items.forEach(function (item) {
                     for (var k in config.remote) {
                         if (k !== "items" && item[k] === undefined) {
@@ -33,7 +37,6 @@ module.exports = function(args, ops) {
             hasPath = true;
             server.addDb(config.db);
         }
-
         server.forever = config.forever;
         server.startTip = config.startTip;
         server.port = config.port;
