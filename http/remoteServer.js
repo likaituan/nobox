@@ -123,7 +123,8 @@
                         Res.end(JSON.stringify({
                             success: true,
                             code:0,
-                            data: ret
+                            data: ret.data || {},
+                            message: ret.message || ""
                         }));
                     });
                     return;

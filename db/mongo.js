@@ -7,13 +7,12 @@
     var assert = require('assert');
     var mongodb = {};
 
-    exp.isInstalled = false;
-
-    try{
+    try {
+        console.log(req("mongodb"));
         mongodb = req("mongodb").MongoClient;
         exp.isInstalled = true;
-    }catch(e){
-        console.log("sorry, you was not installed mongodb");
+    } catch (e) {
+        exp.isInstalled = false;
     }
 
     exp.db = null;
@@ -21,10 +20,11 @@
 
     //连接
     exp.init = function (callback) {
-        if(exp.isInstalled) {
+        if (exp.isInstalled) {
             var port = exp.config.port || 27017;
             mongodb.connect(`mongodb://${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
                 if (err) {
+                    console.log(`connect mongodb fail!`);
                     callback(0);
                 } else {
                     exp.db = db;
@@ -33,26 +33,33 @@
                 }
                 //db.close();
             });
-        }else{
-            console.log("sorry, please start your mongoDB before!");
+        } else {
+            console.log("sorry, you was not installed mongodb");
         }
     };
 
     //查找
-    exp.find = function(tbName, cond, callback){
-        if(arguments.length==2){
+    exp.find = function (tbName, cond, callback) {
+        if (arguments.length == 2) {
             callback = cond;
             cond = null;
         }
         var arr = [];
         var tb = exp.db.collection(tbName);
-        tb.find().each(function(err, doc){
+        tb.find().each(function (err, doc) {
             assert.equal(err, null);
-            if(doc) {
+            if (doc) {
                 arr.push(doc);
-            }else {
-                callback(arr);
+            } else {
+                callback({data: arr});
             }
+        });
+    };
+
+    //查找一条
+    exp.findOne = function (tbName, cond, callback){
+        exp.find(tbName, cond, function(data){
+            callback({data: data[0]});
         });
     };
 
@@ -61,8 +68,8 @@
         var tb = exp.db.collection(tbName);
         tb.insertOne(params, function(err, result) {
             assert.equal(err, null);
-            console.log("Inserted a document into the restaurants collection.");
-            callback(params);
+            //console.log("Inserted a document into the restaurants collection.");
+            callback({message:"add success!"});
         });
     };
 
