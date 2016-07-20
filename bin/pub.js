@@ -28,6 +28,7 @@ var doCmd = function() {
     var cmdExp = exp.cmdList.shift();
     if(cmdExp) {
         var args = cmdExp.split(/\s+/g);
+        console.log(args);
         const ls = cp.spawn(args.shift(), args, {shell: true});
 
         ls.stdout.on('data', (data) => {

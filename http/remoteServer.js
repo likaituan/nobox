@@ -119,7 +119,12 @@
 
                 //针对mongodb
                 if(exp.db){
-                    fun(params, exp.session, exp.db, function(ret){
+                    fun({
+                        params: params,
+                        session: exp.session,
+                        db: exp.db,
+                        ip: exp.getClientIp(Req)
+                    }, function(ret){
                         Res.end(JSON.stringify({
                             success: true,
                             code:0,
@@ -164,6 +169,15 @@
                 }
             });
         })();
+    };
+
+    //获取客户端IP
+    //代码，第一段判断是否有反向代理IP(头信息：x-forwarded-for)，在判断connection的远程IP，以及后端的socket的IP
+    exp.getClientIp = function (req) {
+        return req.headers['x-forwarded-for'] ||
+            req.connection.remoteAddress ||
+            req.socket.remoteAddress ||
+            req.connection.socket.remoteAddress;
     };
 
     //表单检查

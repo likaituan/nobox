@@ -29,9 +29,17 @@ var modList = {
 //命令列表
 var cmdList = {
     //更新
+    install: function(args, ops){
+        console.log("now is reinstall, please wait a moment...");
+        var installCmd = (ops.platform=="win32"?"":"sudo ") + `npm install -g ${ops.package.name}`;
+        cp.exec(installCmd, function callback(error, stdout, stderr) {
+            console.log(stdout);
+        });
+    },
+    //更新
     update: function(args, ops){
         console.log("now is updating, please wait a moment...");
-        var updateCmd = ops.currentOs=="win32" ? `npm update -g ${ops.package.name}` : `sudo npm update -g ${ops.package.name}`;
+        var updateCmd = ops.platform=="win32" ? `npm update -g ${ops.package.name}` : `sudo npm update -g ${ops.package.name}`;
         cp.exec(updateCmd, function callback(error, stdout, stderr) {
             console.log(stdout);
         });
