@@ -60,6 +60,6 @@ module.exports = function(args, ops) {
     if (hasPath) {
         args.open && cp.execSync('open http://localhost:' + server.port);
     } else {
-        console.log(`sorry, please set path parameter on command line or setting a '${ops.package.name}.config.js' file on current directory!`);
+        console.log(`sorry, please set path parameter on command line or setting a '${ops.pk.name}.config.js' file on current directory!`);
     }
 };

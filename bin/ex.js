@@ -29,7 +29,7 @@ exports.getArgs = function(argv) {
 //获取配置信息
 exports.getConfig = function(args, ops) {
     var config = {};
-    var configFile = `${ops.currentPath}${ops.package.name}.config.js`;
+    var configFile = `${ops.currentPath}${ops.pk.name}.config.js`;
     var hasFile = fs.existsSync(configFile);
     if (hasFile) {
         config = require(configFile);

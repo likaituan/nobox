@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 var ex = require("./ex");
-var package = require("../package.json");
+var pk = require("../package.json");
 
 var argv = process.argv.slice(2);
 var cmd = /^\-/.test(argv[0]) ? "" : argv.shift();
@@ -10,7 +10,7 @@ args.cmd = cmd;
 
 
 var ops = {};
-ops.package = package;
+ops.pk = pk;
 ops.currentPath = process.cwd() + "/";
 ops.sudo = process.platform=="win32" ? "" : "sudo ";
 ops.inpm = process.platform=="win32" ? "npm.cmd" : "npm";
@@ -24,7 +24,7 @@ cmdList.pub_server = require("./pub_server");   //服务端发版
 
 //查看版本
 if(args.v || args.version){
-    console.log(package.version);
+    console.log(pk.version);
 //命令
 }else if(cmdList[cmd]){
     cmdList[cmd](args, ops);
@@ -33,5 +33,5 @@ if(args.v || args.version){
     console.log(`unknown command "${cmd}"!`);
 //默认
 }else{
-    console.log(`welcome to ${package.name}, ${package.name} current version is ${package.version}!`);
+    console.log(`welcome to ${pk.name}, ${pk.name} current version is ${pk.version}!`);
 }
