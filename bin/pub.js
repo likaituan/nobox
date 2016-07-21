@@ -54,7 +54,7 @@ var showTip = function(code){
             exp[method]();
         }
     } else {
-        console.log(`${tag} error: ${stderr}`);
+        console.log(`${tag} error: ${code}`);
     }
 };
 
@@ -87,7 +87,17 @@ exp.publish = function(){
         ? `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`
         : `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`;
     //console.log(cmd);
-    ex.spawn(cmd, showTip);
+    if(process.platform=="win32") {
+        cp.exec(cmd, function(err,stdout,stderr){
+            if(err){
+                console.log("publish error:" + stderr.toString());
+            }else{
+                console.log("publish success!")
+            }
+        });
+    }else{
+        ex.spawn(cmd, showTip);
+    }
 };
 
 

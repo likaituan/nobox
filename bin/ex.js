@@ -43,7 +43,10 @@ exports.getConfig = function(args, ops) {
 
 //spawn封装
 exports.spawn = function(cmdExp, callback) {
-    var args = cmdExp.split(/\s+/);
+    var args = cmdExp;
+    if(typeof args=="string") {
+        args = args.split(/\s+/);
+    }
     var cmd = args.shift();
     if(cmd=="npm" && process.platform=="win32"){
         cmd = "npm.cmd"
