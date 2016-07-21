@@ -6,78 +6,90 @@ var fs = require("fs");
 var cp = require("child_process");
 var ex = require("./ex");
 
-var exp = {};
 var args = {};
 var ops = {};
+
 var config = {};
+var exp = {};
 var pub;
 
 //cmd对外接口
-var cmd = function(cmdExp) {
+var cmdFun = function(cmdExp) {
     exp.cmdList.push(cmdExp);
 };
 
-//上传
-var doPub = function(){
-    config.onPubBefore && config.onPubBefore(cmd);
-    exp.cmdList.length>0 ? doCmd() : doPub2();
+//上传前检查
+var chkPubBefore = function(){
+    config.onPubBefore && config.onPubBefore(cmdFun);
+    exp.cmdList.length>0 ? runCmd() : exp.pack();
 };
 
-//执行单个命令
-var doCmd = function() {
+//上传前循环执行命令
+var runCmd = function() {
     var cmdExp = exp.cmdList.shift();
     if(cmdExp) {
-        var args = cmdExp.split(/\s+/g);
-        console.log(args);
-        const ls = cp.spawn(args.shift(), args, {shell: true});
-
-        ls.stdout.on('data', (data) => {
-            console.log(data.toString());
-        });
-
-        ls.stderr.on('data', (data) => {
-            process.stderr.write(data);
-        });
-
-        ls.on('close', (code) => {
+        ex.spawn(cmdExp, (code) => {
             if (code == 0) {
-                doCmd();
+                runCmd();
             } else {
                 console.log("pub before fail!")
             }
         });
     }else{
         console.log("pub before success!");
-        doPub2();
+        exp.pack();
     }
 };
 
-//上传2
-var doPub2 = function() {
-    var user = pub.remoteUser || "root";
-    var port = pub.remotePort || config.port;
-    var tarFile = "bin.tar.gz";
+var steps = ["pack", "upload", "publish"];
 
-    cp.exec(`tar -zcf ${tarFile} ${pub.tarSource}`, function (err, stdout, stderr) {
-        var sshArgs = "";
-        var keyPath = `sshkeys/${args.env}.key`;
-        if (fs.existsSync(keyPath)) {
-            sshArgs = `-i ${keyPath}`;
+//提示
+var showTip = function(code){
+    var tag = steps.shift();
+    if(code==0) {
+        console.log(`${tag} success!`);
+        var method = steps[0];
+        if(method){
+            console.log(`${method}ing...`);
+            exp[method]();
         }
-        ex.showTip("pack", err, stderr) && cp.exec(`scp ${sshArgs} ${tarFile} ${user}@${exp.ip}:${exp.dir}/bin.tar.gz`, function (err, stdout, stderr) {
-            cp.execSync(`rm -rf ${tarFile}`);
-            if (ex.showTip("upload", err, stderr)) {
-                var sshCmd = ops.platform == "win32"
-                    ? `ssh ${sshArgs} ${user}@${exp.ip} "sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`
-                    : `ssh ${sshArgs} ${user}@${exp.ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`;
-                //console.log(sshCmd);
-                cp.exec(sshCmd, function (err, stdout, stderr) {
-                    ex.showTip("publish", err, stderr);
-                });
-            }
-        });
+    } else {
+        console.log(`${tag} error: ${stderr}`);
+    }
+};
+
+//打包
+exp.pack = function(){
+    exp.tarFile = "bin.tar.gz";
+    ex.spawn(`tar -zcf ${exp.tarFile} ${pub.tarSource}`, showTip);
+};
+
+//上传
+exp.upload = function() {
+    exp.user = pub.remoteUser || "root";
+
+    exp.sshArgs = "";
+    var keyPath = `sshkeys/${args.env}.key`;
+    if (fs.existsSync(keyPath)) {
+        exp.sshArgs = `-i ${keyPath}`;
+    }
+    var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${exp.user}@${exp.ip}:${exp.dir}/bin.tar.gz`;
+    ex.spawn(cmd, function(code){
+        cp.execSync(`rm -rf ${exp.tarFile}`);
+        showTip(code);
     });
 };
+
+//发版
+exp.publish = function(){
+    var port = pub.remotePort || config.port;
+    var cmd = process.platform == "win32"
+        ? `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`
+        : `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`;
+    //console.log(cmd);
+    ex.spawn(cmd, showTip);
+};
+
 
 module.exports = function(_args, _ops) {
     args = _args;
@@ -85,18 +97,19 @@ module.exports = function(_args, _ops) {
 
     exp.cmdList = [];
     args.env = args.more[0];
-    try {
-        args.currentBranch = cp.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
-    }catch(e){}
-    config = ex.getConfig(args, ops);
 
     if (args.env) {
-        pub = typeof(config.pub) == "function" ? config.pub(args) : config.pub;
-        pub = pub || {};
+        try {
+            args.currentBranch = cp.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
+        }catch(e){}
+
+        config = ex.getConfig(args, ops);
+        pub = config.pub || {};
         exp.ip = pub.remoteIp;
         exp.dir = pub.remoteDir; //暂时写死
+
         if (exp.ip && exp.dir) {
-            doPub(args,config);
+            chkPubBefore();
         } else {
             console.log("please setting publish option before!");
         }

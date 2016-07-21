@@ -1,4 +1,5 @@
 var fs = require("fs");
+var cp = require("child_process");
 var ex = require("../core/ex");
 
 //获取参数列表
@@ -40,13 +41,24 @@ exports.getConfig = function(args, ops) {
     return config;
 };
 
-//提示
-exports.showTip = function(tag, err, stderr){
-    if(err) {
-        console.log(`${tag} error: ${stderr}`);
-        return false;
-    } else {
-        console.log(`${tag} success!`);
-        return true;
+//spawn封装
+exports.spawn = function(cmdExp, callback) {
+    var args = cmdExp.split(/\s+/);
+    var cmd = args.shift();
+    if(cmd=="npm" && process.platform=="win32"){
+        cmd = "npm.cmd"
     }
+    var ls = cp.spawn(cmd, args, {shell: true});
+
+    ls.stdout.on('data', (data) => {
+        var str = data.toString();
+        console.log(str);
+    });
+
+    ls.stderr.on('data', (data) => {
+        var str = data.toString();
+        !str.includes("not in PATH env variable") && process.stderr.write(data);
+    });
+
+    ls.on('close', callback);
 };

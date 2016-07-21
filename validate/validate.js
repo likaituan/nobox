@@ -37,6 +37,7 @@
                 title = o;
                 rule = key;
             }
+            title = `"${title}"`;
 
             var chkItems = rules[rule] || Rules[rule];
             if(!chkItems) {
@@ -44,6 +45,13 @@
             }
             if(typeof(chkItems)=="function"){
                 chkItems = chkItems(params);
+                console.log(chkItems);
+            }
+            if(typeof chkItems!="object"){
+                if(typeof chkItems=="string"){
+                    chkItems = chkItems.replace(/\{0\}/g, title);
+                }
+                return chkItems;
             }
             var val = params[key];
             /*
