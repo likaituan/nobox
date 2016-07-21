@@ -1,24 +1,23 @@
 #!/usr/bin/env node
 
 var fs = require("fs");
-var cp = require("child_process");
-var ex = require("../core/ex");
+var cmd = require("./cmd");
 
-module.exports = function(args, ops) {
     var port = "$1";
     var dir = "$2";
-    var cmd = cp.syncExec;
+
+    console.log("port=",port,"dir=",dir);
+
+    cmd.start();
 
     //step1 - stop node
-    var pid = cmd("pid=`ps -aux | grep nobox | grep start | grep port=$port | awk '{print $2}'`");
+    var pid = cmd.sync("pid=`ps -aux | grep nobox | grep start | grep port=$port | awk '{print $2}'`");
     pid && cmd (`kill - 9 ${pid}`);
 
     cmd(`cd ${dir}`);
 
     //step2 - delete old files
-    if(fs.syncExists("bin/")) {
-        cmd("rm - rf bin/");
-    }
+    fs.syncExists("bin/") && cmd("rm - rf bin/");
 
     //step3 - add new files
     cmd("mkdir bin");
@@ -27,7 +26,7 @@ module.exports = function(args, ops) {
     cmd("cd bin/");
 
     //step4 - run node
-    var noboxExeFile = cmd("npm bin -g") + "/nobox";
+    var noboxExeFile = cmd.sync("npm bin -g") + "/nobox";
     cmd(`nohup node ${noboxExeFile} start bin port=$port > 1.log 2>&1 &`);
 
-};
+    cmd.end();
