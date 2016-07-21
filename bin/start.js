@@ -1,4 +1,4 @@
-var server = require("../http/core");
+var server = require("../server/core");
 var ex = require("./ex");
 
 module.exports = function(args, ops) {
