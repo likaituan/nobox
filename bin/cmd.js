@@ -45,7 +45,8 @@ exp.start = function() {
 
 //命令结束
 exp.end = function() {
+    console.log(cmdList);
     var cmd = cmdList.shift();
-    cmd && runCmd(cmd, exp.done);
+    cmd && runCmd(cmd, exp.end);
 };
 
