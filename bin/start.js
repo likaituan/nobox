@@ -4,7 +4,6 @@ var ex = require("./ex");
 module.exports = function(args, ops) {
     var hasPath = false;
     var config = ex.getConfig(args, ops);
-
     if (config.hasFile) {
         if (config.static) {
             hasPath = true;

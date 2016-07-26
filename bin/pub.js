@@ -81,14 +81,23 @@ exp.upload = function() {
 };
 
 //发版
-exp.publish = function(){
+exp.publish_bak = function(){
     var port = pub.remotePort || config.port;
-    var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/).concat(`node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env}`);
+    //var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/).concat(`node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env}`);
+    var cmd = `nohup node /Users/likaituan/github/nobox/bin/cli.js pub_server dir=/Users/likaituan/2cash port=8888 env=test > /Users/likaituan/2cash/1.log 2>&1 &`;
     /*
     var cmd = process.platform == "win32"
         ? `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/).concat(`sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}`)
         : `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`;*/
     //console.log(cmd);
+    ex.spawn(cmd, showTip);
+};
+
+//发版
+exp.publish = function(){
+    var port = pub.remotePort || config.port;
+
+    var cmd = `nohup node /Users/likaituan/github/nobox/bin/cli.js pub_server dir=/Users/likaituan/2cash port=8888 env=test > /Users/likaituan/2cash/1.log 2>&1 &`;
     ex.spawn(cmd, showTip);
 };
 

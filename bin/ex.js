@@ -65,3 +65,38 @@ exports.spawn = function(cmdExp, callback) {
 
     ls.on('close', callback);
 };
+
+//获取进程ID
+//如找不到pid返回0
+exports.getPid = function(keywords){
+    var ps = process.platform=="linux" ? "ps -aux" : "ps aux";
+    var stdout = cp.execSync(ps).toString().trim();
+
+    var plist = stdout.split('\n');
+    var pid = 0;
+    plist.some(function(line) {
+        var isMatch = keywords.every(function(keyword){
+            return line.includes(keyword);
+        });
+        if(isMatch) {
+            var _pid = line.trim().split(/\s+/)[1];
+            if(_pid == process.pid){
+                isMatch = false;
+            }else{
+                pid = _pid;
+            }
+        }
+        return isMatch;
+    });
+    return pid;
+};
+
+//杀进程
+exports.kill = function(pid){
+    cp.execSync(`kill -9 ${pid}`)
+};
+
+//解压缩
+exports.unTar = function(tarFile, unTarDir){
+    cp.execSync(`tar -zxf ${tarFile} -C ${unTarDir}/`.replace(/\/\/$/,"/"));
+};

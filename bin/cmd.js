@@ -35,7 +35,7 @@ var exp = module.exports = function(cmd) {
 
 //同步执行
 exp.sync = function(cmd) {
-    return cp.execSync(cmd);
+    return cp.execSync(cmd).toString().trim();
 };
 
 //命令开始
@@ -45,8 +45,18 @@ exp.start = function() {
 
 //命令结束
 exp.end = function() {
-    console.log(cmdList);
+    if(!exp.first){
+        exp.first=true;
+        console.log(cmdList);
+    }
     var cmd = cmdList.shift();
     cmd && runCmd(cmd, exp.end);
 };
+
+//命令结束
+exp.getList = function() {
+    return cmdList.join(" && ");
+};
+
+
 
