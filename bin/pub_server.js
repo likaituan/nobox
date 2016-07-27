@@ -25,8 +25,6 @@ module.exports = function(args, ops) {
     ex.unTar(`${args.dir}/bin.tar.gz`, dir);
 
     //step4 - run node
-    ops.currentPath = dir + "/";
-    args.currentPath = dir;
     args.cmd = "start";
     start(args, ops);
 

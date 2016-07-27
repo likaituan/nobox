@@ -81,23 +81,11 @@ exp.upload = function() {
 };
 
 //发版
-exp.publish_bak = function(){
-    var port = pub.remotePort || config.port;
-    //var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/).concat(`node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env}`);
-    var cmd = `nohup node /Users/likaituan/github/nobox/bin/cli.js pub_server dir=/Users/likaituan/2cash port=8888 env=test > /Users/likaituan/2cash/1.log 2>&1 &`;
-    /*
-    var cmd = process.platform == "win32"
-        ? `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/).concat(`sh \`npm root -g\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}`)
-        : `ssh ${exp.sshArgs} ${exp.user}@${exp.ip} "sh \\\`npm root -g\\\`/nobox/bin/pub_server.sh ${port} ${exp.dir} ${args.env}"`;*/
-    //console.log(cmd);
-    ex.spawn(cmd, showTip);
-};
-
-//发版
 exp.publish = function(){
     var port = pub.remotePort || config.port;
-
-    var cmd = `nohup node /Users/likaituan/github/nobox/bin/cli.js pub_server dir=/Users/likaituan/2cash port=8888 env=test > /Users/likaituan/2cash/1.log 2>&1 &`;
+    var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/);
+    process.platform=="win32" && cmd.push(`nohup node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \> ${exp.dir}/logs/1.log 2\>\&1 \&`);
+    process.platform!="win32" && cmd.push(`nohup node \\\`npm root -g\\\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \\> ${exp.dir}/logs/1.log 2\\>\\&1 \\&`);
     ex.spawn(cmd, showTip);
 };
 
@@ -109,22 +97,26 @@ module.exports = function(_args, _ops) {
     exp.cmdList = [];
     args.env = args.more[0];
 
-    if (args.env) {
-        try {
-            args.currentBranch = cp.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
-        }catch(e){}
-
-        config = ex.getConfig(args, ops);
-        pub = config.pub || {};
-        exp.ip = pub.remoteIp;
-        exp.dir = pub.remoteDir; //暂时写死
-
-        if (exp.ip && exp.dir) {
-            chkPubBefore();
-        } else {
-            console.log("please setting publish option before!");
-        }
-    } else {
-        console.log("please select a environment before!");
+    if (!args.env) {
+        throw "please select a environment before!";
     }
+    try {
+        args.currentBranch = cp.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
+    }catch(e){}
+
+    config = ex.getConfig(args, ops);
+    args.show && console.log(config);
+    pub = config.pub;
+    if(!pub) {
+        throw "please setting publish option 'pub' before!";
+    }
+    exp.ip = pub.remoteIp;
+    if(!exp.ip){
+        throw "please setting pub option 'remoteIp' before!";
+    }
+    exp.dir = pub.remoteDir; //暂时写死
+    if (!exp.dir) {
+        throw "please setting pub option 'remoteDir' before!";
+    }
+    chkPubBefore();
 };
