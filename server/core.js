@@ -84,7 +84,7 @@
                 remoteServer.db = db;
             }
             var port = exp.port || 80;
-            staticServer.init();
+            staticServer.init(exp);
             remoteServer.init();
             global.httpx = http.createServer(ServerBox).listen(port).on("error", Error);
             exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);

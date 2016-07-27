@@ -18,7 +18,8 @@
     exp.htmlList = {};
 
     //初始化
-    exp.init = function(){
+    exp.init = function(server){
+        exp.server = server;
         for(var path in exp.paths) {
             var item = exp.paths[path];
             if (item.file) {
@@ -45,7 +46,7 @@
 
         var ext = file.split(".").slice(-1)[0] || "txt";
         var mimeType = mime[ext] || "text/plain";
-        var isGzip = item.gzip && /^(?:js|css|html|txt|json)$/i.test(ext);
+        var isGzip = exp.server.gzip && /^(?:js|css|html|txt|json)$/i.test(ext);
 
         /*
          var encode = /^image\/|^audio\//.test(mimeType) ? 'binary' : 'utf-8';

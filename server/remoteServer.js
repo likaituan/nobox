@@ -12,6 +12,7 @@
     var _params = req("./params");
 
 	var ex = req("../core/ex");
+    var pk = require("../package.json");
     var str = req("../core/string");
     var date = req("../core/date");
     var val = req("../validate/validate");
@@ -61,6 +62,7 @@
     exp.parse = function (Req, Res, item) {
         var resJson = {};
         resJson["Content-Type"] = "text/html;charset=utf-8";
+        resJson["Server"] = `${pk.name}/${pk.version}`;
         if(item.crossDomain){
             resJson["Access-Control-Allow-Origin"] = item.crossDomain;
             resJson["Access-Control-Allow-Credentials"] = false;

@@ -1,12 +1,11 @@
 var fs = require("fs");
 var cp = require("child_process");
-var ex = require("../core/ex");
 
 //获取参数列表
 exports.getArgs = function(argv) {
     var args = {};
     args.more = [];
-    args.ip = ex.getIp();
+
     argv.forEach(function(kv){
         kv = kv.split("=");
         var k = kv[0];
@@ -29,7 +28,7 @@ exports.getArgs = function(argv) {
 //获取配置信息
 exports.getConfig = function(args, ops) {
     var config = {};
-    var configFile = `${ops.currentPath}${ops.pk.name}.config.js`;
+    var configFile = `${args.path}/${ops.pk.name}.config.js`;
     var hasFile = fs.existsSync(configFile);
     if (hasFile) {
         config = require(configFile);

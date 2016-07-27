@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 
+var path = require("path");
 var ex = require("./ex");
+var coreEx = require("../core/ex");
 var pk = require("../package.json");
 
 var argv = process.argv.slice(2);
 var cmd = /^\-/.test(argv[0]) ? "" : argv.shift();
 var args = ex.getArgs(argv);
 args.cmd = cmd;
-
+args.ip = args.ip || coreEx.getIp();
+args.path = path.resolve(args.path||"./");
 
 var ops = {};
 ops.pk = pk;
