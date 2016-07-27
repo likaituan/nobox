@@ -84,8 +84,9 @@ exp.upload = function() {
 exp.publish = function(){
     var port = pub.remotePort || config.port;
     var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/);
-    process.platform=="win32" && cmd.push(`nohup node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \> ${exp.dir}/logs/1.log 2\>\&1 \&`);
-    process.platform!="win32" && cmd.push(`nohup node \\\`npm root -g\\\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \\> ${exp.dir}/logs/1.log 2\\>\\&1 \\&`);
+    var date = new Date().toJSON().replace("T","_").replace("Z","");
+    process.platform=="win32" && cmd.push(`nohup node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \> ${exp.dir}/logs/${date}.log 2\>\&1 \&`);
+    process.platform!="win32" && cmd.push(`nohup node \\\`npm root -g\\\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \\> ${exp.dir}/logs/${date}.log 2\\>\\&1 \\&`);
     ex.spawn(cmd, showTip);
 };
 
