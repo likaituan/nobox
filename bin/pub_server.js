@@ -11,7 +11,7 @@ module.exports = function(args, ops) {
     args.node = args.node || args.env;
     args.java = args.java || args.env;
 
-    var dir = `${args.dir}/bin`;
+    var dir = `${args.dir}/web`;
 
     //step1 - stop node
     var pid = ex.getPid(["nobox","pub_server", args.port]);

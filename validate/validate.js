@@ -51,7 +51,9 @@
                 if(typeof chkItems=="string"){
                     chkItems = chkItems.replace(/\{0\}/g, title);
                 }
-                return chkItems;
+                if(chkItems!==true) {
+                    return chkItems;
+                }
             }
             var val = params[key];
             /*
