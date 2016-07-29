@@ -4,26 +4,16 @@
  */
 
 var cp = require("child_process");
-var ex = require("./ex");
 
 module.exports = {
-    //重装
-    install: function(args, ops){
-        console.log("now is reinstall, please wait a moment...");
-        cp.exec(`${ops.sudo}${ops.inpm} install -g ${ops.pk.name}`, function callback(error, stdout, stderr) {
-            console.log(stdout);
-        });
-    },
     //更新
     update: function(args, ops){
         console.log("now is updating, please wait a moment...");
-        cp.exec(`${ops.sudo}${ops.inpm} update -g ${ops.pk.name}`, function (error, stdout, stderr) {
-            console.log(stdout);
-        });
-        /*
-        ex.spawn(`${ops.sudo}${ops.inpm} update -g ${ops.pk.name}`, function (code) {
-            console.log(code==0 ? "update success!" : "update fail!");
-        });
-        */
+        var cmd = `${ops.sudo}${ops.inpm} install -g ${ops.pk.name}`;
+        if(args.more && args.more.length>0){
+            cmd += `@${args.more[0]}`;
+        }
+        var stdout = cp.execSync(cmd).toString();
+        console.log(stdout);
     }
 };

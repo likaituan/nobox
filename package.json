@@ -1,6 +1,6 @@
 {
   "name": "nobox",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "main": "server/core.js",
   "bin": {
     "nobox": "./bin/cli.js"
@@ -14,13 +14,15 @@
     "url": "git@github.com:likaituan/nobox.git"
   },
   "license": "MIT",
-  "description": "nobox is a node framework",
+  "description": "nobox is a multifunctional node framework, integrated database and staic server and remote server and socket and form validate and other",
   "keywords": [
-    "nobox",
     "node",
-    "framework",
-    "server",
-    "socket"
+    "nobox",
+    "db", "database", "mongodb",
+    "server", "http", "https", "gzip",
+    "socket",
+    "validate", "form",
+    "framework"
   ],
   "dependencies": {}
 }
