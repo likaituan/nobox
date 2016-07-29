@@ -20,7 +20,7 @@
     "nobox",
     "db", "database", "mongodb",
     "server", "http", "https", "gzip",
-    "socket",
+    "socket", "web socket",
     "validate", "form",
     "framework"
   ],
