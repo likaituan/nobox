@@ -61,7 +61,18 @@ var showTip = function(code){
 //打包
 exp.pack = function(){
     exp.tarFile = "bin.tar.gz";
-    ex.spawn(`tar -zcf ${exp.tarFile} ${pub.tarSource}`, showTip);
+    var source = pub.packages || [];
+    pub.staticDir && source.push(pub.staticDir);
+    pub.nodeDir && source.push(pub.nodeDir);
+    if(source.length>0) {
+        if(fs.existsSync("./nobox.config.js")){
+            source.push("./nobox.config.js");
+        }
+        source = source.join(" ");
+        ex.spawn(`tar -zcf ${exp.tarFile} ${source}`, showTip);
+    }else{
+        console.log("source is empty");
+    }
 };
 
 //上传
