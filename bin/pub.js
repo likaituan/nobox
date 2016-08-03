@@ -97,8 +97,7 @@ exp.publish = function(){
     var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/);
     var timestamp = Date.now() - new Date().getTimezoneOffset()*60000;
     var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
-    process.platform=="win32" && cmd.push(`"nohup node \`npm root -g\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} > ${exp.dir}/logs/${date}.log 2>&1 &"`);
-    process.platform!="win32" && cmd.push(`nohup node \\\`npm root -g\\\`/nobox/bin/cli.js pub_server port=${port} dir=${exp.dir} env=${args.env} \\> ${exp.dir}/logs/${date}.log 2\\>\\&1 \\&`);
+    cmd.push(`"nohup nobox pub_server port=${port} dir=${exp.dir} env=${args.env} > ${exp.dir}/logs/${date}.log 2>&1 &"`);
     //console.log(cmd);
     ex.spawn(cmd, showTip);
 };

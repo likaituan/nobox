@@ -18,10 +18,32 @@
     exp.config = {};
 
     //连接
-    exp.init = function (callback) {
+    exp.init_bak = function (callback) {
         if (exp.isInstalled) {
             var port = exp.config.port || 27017;
             mongodb.connect(`mongodb://${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
+                if (err) {
+                    console.log(err.message);
+                    console.log(`warning: your mongodb server was not installed or not started`);
+                    callback(0);
+                } else {
+                    exp.db = db;
+                    console.log(`MongoDB Is Running At ${exp.config.ip}:${port} by ${exp.config.dbName}`);
+                    callback(exp);
+                }
+                //db.close();
+            });
+        } else {
+            console.log("warning: you was not installed mongodb package!");
+            callback(0);
+        }
+    };
+
+    exp.init = function (callback) {
+        if (exp.isInstalled) {
+            var port = exp.config.port || 27017;
+            var userInfo = exp.config.userName&&exp.config.password ? exp.config.userName +":"+exp.config.password+"@":"";
+            mongodb.connect(`mongodb://${userInfo}${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
                 if (err) {
                     console.log(err.message);
                     console.log(`warning: your mongodb server was not installed or not started`);
@@ -58,10 +80,23 @@
     };
 
     //查找一条
-    exp.findOne = function (tbName, cond, callback){
+    exp.findOne_bak = function (tbName, cond, callback){
         exp.find(tbName, cond, function(data){
             callback({data: data[0]});
         }).limit(1);
+    };
+
+    //查找一条
+    exp.findOne = function (tbName, params, callback){
+        var tb = exp.db.collection(tbName);
+        tb.findOne(params,function (err,item) {
+            assert.equal(err, null);
+            if(item){
+                callback({data:item});
+            }else{
+                callback({result:null});
+            }
+        });
     };
 
     //保存
