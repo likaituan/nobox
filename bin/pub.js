@@ -3,6 +3,7 @@
  */
 
 var fs = require("fs");
+var path = require("path");
 var cp = require("child_process");
 var ex = require("./ex");
 
@@ -12,16 +13,23 @@ var ops = {};
 var config = {};
 var exp = {};
 var pub;
+var mid;
 
 //cmd对外接口
 var cmdFun = function(cmdExp) {
     exp.cmdList.push(cmdExp);
 };
 
+var getDate = function(){
+    var timestamp = Date.now() - new Date().getTimezoneOffset()*60000;
+    var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
+    return date;
+};
+
 //上传前检查
 var chkPubBefore = function(){
     config.onPubBefore && !args.onlyPub && config.onPubBefore(cmdFun);
-    exp.cmdList.length>0 ? runCmd() : exp.pack();
+    exp.cmdList.length>0 ? runCmd() : startPub();
 };
 
 //上传前循环执行命令
@@ -37,7 +45,7 @@ var runCmd = function() {
         });
     }else{
         console.log("pub before success!");
-        exp.pack();
+        startPub();
     }
 };
 
@@ -58,9 +66,22 @@ var showTip = function(code){
     }
 };
 
+//开始上传
+var startPub = function(){
+    var dir = args.localDir || path.resolve("./");
+    console.log(dir);
+    exp.tarFile = `${dir}/bin.tar.gz`;
+    if(fs.existsSync(exp.tarFile)){
+        steps.shift();
+        console.log(`uploading...`);
+        exp.upload();
+    }else {
+        exp.pack();
+    }
+};
+
 //打包
 exp.pack = function(){
-    exp.tarFile = "bin.tar.gz";
     var source = pub.packages || [];
     pub.staticDir && source.push(pub.staticDir);
     pub.nodeDir && source.push(pub.nodeDir);
@@ -77,14 +98,13 @@ exp.pack = function(){
 
 //上传
 exp.upload = function() {
-    exp.user = pub.remoteUser || "root";
-
+    var o = mid || pub;
     exp.sshArgs = "";
-    var keyPath = `sshkeys/${args.env}.key`;
-    if (fs.existsSync(keyPath)) {
-        exp.sshArgs = `-i ${keyPath}`;
+    if (o.key && fs.existsSync(o.key)) {
+        exp.sshArgs = `-i ${o.key}`;
     }
-    var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${exp.user}@${exp.ip}:${exp.dir}/bin.tar.gz`;
+    var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
+    console.log(cmd);
     ex.spawn(cmd, function(code){
         cp.execSync(`rm -rf ${exp.tarFile}`);
         showTip(code);
@@ -93,13 +113,20 @@ exp.upload = function() {
 
 //发版
 exp.publish = function(){
-    var port = pub.remotePort || config.port;
-    var cmd = `ssh ${exp.sshArgs} ${exp.user}@${exp.ip}`.split(/\s+/);
-    var timestamp = Date.now() - new Date().getTimezoneOffset()*60000;
-    var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
-    cmd.push(`"nohup nobox pub_server port=${port} dir=${exp.dir} env=${args.env} > ${exp.dir}/logs/${date}.log 2>&1 &"`);
-    //console.log(cmd);
-    ex.spawn(cmd, showTip);
+    var cmd;
+    console.log("useMid=",exp.useMid);
+    if(mid){
+        cmd = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
+        cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
+        console.log(cmd);
+        ex.spawn(cmd, showTip);
+    }else{
+        var date = getDate();
+        cmd = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
+        cmd.push(`"nohup nobox pub_server port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
+        console.log(cmd);
+        ex.spawn(cmd, showTip);
+    }
 };
 
 
@@ -118,18 +145,24 @@ module.exports = function(_args, _ops) {
     }catch(e){}
 
     config = ex.getConfig(args, ops);
-    args.show && console.log(config);
-    pub = config.pub;
+    pub = config.pub || args.pub;
     if(!pub) {
         throw "please setting publish option 'pub' before!";
     }
-    exp.ip = pub.remoteIp;
-    if(!exp.ip){
+    pub.user = pub.remoteUser || "root";
+    pub.port = pub.remotePort || config.port;
+    pub.ip = pub.remoteIp;
+    pub.dir = pub.remoteDir;
+    if(!pub.ip){
         throw "please setting pub option 'remoteIp' before!";
     }
-    exp.dir = pub.remoteDir; //暂时写死
-    if (!exp.dir) {
+    if (!pub.dir) {
         throw "please setting pub option 'remoteDir' before!";
     }
+    if(pub.useMid) {
+        mid = config.midPub;
+        mid.user = mid.user || "root";
+    }
+    args.show && console.log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
     chkPubBefore();
 };

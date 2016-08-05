@@ -11,7 +11,11 @@ exports.getArgs = function(argv) {
         var k = kv[0];
         var v = kv[1];
         if(kv.length==2){
-            args[k] = v;
+            if(/\./.test(k)) {
+                exports.parseDot(args,k.split("."),v);
+            }else{
+                args[k] = v;
+            }
         }else if(/^\-\-(\w+)$/.test(k)){
             args[RegExp.$1] = true;
         }else if(/^\-(\w+)$/.test(k)){
@@ -23,6 +27,17 @@ exports.getArgs = function(argv) {
         }
     });
     return args;
+};
+
+//解析多个.相隔开的key
+exports.parseDot = function(args, kk, v){
+    var k = kk.shift();
+    if(kk.length>0){
+        args[k] = args[k] || {};
+        exports.parseDot(args[k],kk,v);
+    }else{
+        args[k] = v;
+    }
 };
 
 //获取配置信息
