@@ -69,7 +69,6 @@ var showTip = function(code){
 //开始上传
 var startPub = function(){
     var dir = args.localDir || path.resolve("./");
-    console.log(dir);
     exp.tarFile = `${dir}/bin.tar.gz`;
     if(fs.existsSync(exp.tarFile)){
         steps.shift();
@@ -104,7 +103,7 @@ exp.upload = function() {
         exp.sshArgs = `-i ${o.key}`;
     }
     var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
-    console.log(cmd);
+    //console.log(cmd);
     ex.spawn(cmd, function(code){
         cp.execSync(`rm -rf ${exp.tarFile}`);
         showTip(code);
@@ -114,17 +113,17 @@ exp.upload = function() {
 //发版
 exp.publish = function(){
     var cmd;
-    console.log("useMid=",exp.useMid);
     if(mid){
+        var key = pub.key ? `pub.key=${pub.key}` : '';
         cmd = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
-        cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
-        console.log(cmd);
+        cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
+        //console.log(cmd);
         ex.spawn(cmd, showTip);
     }else{
         var date = getDate();
         cmd = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
         cmd.push(`"nohup nobox pub_server port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-        console.log(cmd);
+        //console.log(cmd);
         ex.spawn(cmd, showTip);
     }
 };
@@ -159,8 +158,8 @@ module.exports = function(_args, _ops) {
     if (!pub.dir) {
         throw "please setting pub option 'remoteDir' before!";
     }
-    if(pub.useMid) {
-        mid = config.midPub;
+    if(pub.mid) {
+        mid = pub.mid;
         mid.user = mid.user || "root";
     }
     args.show && console.log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
