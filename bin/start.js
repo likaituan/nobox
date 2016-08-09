@@ -4,7 +4,6 @@ var ex = require("./ex");
 module.exports = function(args, ops) {
     var hasPath = false;
     var config = ex.getConfig(args, ops);
-    args.show && console.log(config);
     if (config.hasFile) {
         if (config.static) {
             hasPath = true;
@@ -42,7 +41,13 @@ module.exports = function(args, ops) {
         server.startTip = config.startTip;
         server.port = config.port;
         server.start();
-    } else if (args.path) {
+    } else if (args.static) {
+        if(typeof args.static=="string"){
+            args.static = {
+                path: "/",
+                dir: args.static
+            };
+        }
         hasPath = true;
         if (args.seekjs) {
             server.addStatic({
@@ -50,10 +55,7 @@ module.exports = function(args, ops) {
                 dir: args.seekjs
             });
         }
-        server.addStatic({
-            path: "/",
-            dir: args.path
-        });
+        server.addStatic(args.static);
         server.port = args.port || 80;
         server.start();
     }
@@ -61,5 +63,6 @@ module.exports = function(args, ops) {
         throw `sorry, please set path parameter on command line or setting a '${ops.pk.name}.config.js' file on current directory!`;
     }
     args.open && cp.execSync(`open http://localhost:${server.port}`);
+    args.show && console.log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
     args.show && console.log(server);
 };

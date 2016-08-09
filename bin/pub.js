@@ -66,9 +66,24 @@ var showTip = function(code){
     }
 };
 
+//获取所有的Node依赖文件
+var getNodeDeps = function(currentFile, deps, isLoaded){
+    if(isLoaded[currentFile]){
+        return [];
+    }else{
+        isLoaded[currentFile] = true;
+        deps.push(currentFile);
+        fs.getFileSync(currentFile).replace(/require\((.+?)\)/g, function(_,file){
+            var subDeps = getNodeDeps(file, deps, isLoaded);
+            deps = deps.concat(subDeps);
+        });
+    }
+    return deps;
+};
+
 //开始上传
 var startPub = function(){
-    var dir = args.localDir || path.resolve("./");
+    var dir = args.localDir || ".";//path.resolve("./");
     exp.tarFile = `${dir}/bin.tar.gz`;
     if(fs.existsSync(exp.tarFile)){
         steps.shift();
@@ -84,9 +99,15 @@ exp.pack = function(){
     var source = pub.packages || [];
     pub.staticDir && source.push(pub.staticDir);
     pub.nodeDir && source.push(pub.nodeDir);
+
     if(source.length>0) {
         if(fs.existsSync("./nobox.config.js")){
             source.push("./nobox.config.js");
+            /*
+            var deps = getNodeDeps("./nobox.config", [], {});
+            console.log(deps);
+            source = source.concat(deps);
+            */
         }
         source = source.join(" ");
         ex.spawn(`tar -zcf ${exp.tarFile} ${source}`, showTip);
@@ -103,7 +124,7 @@ exp.upload = function() {
         exp.sshArgs = `-i ${o.key}`;
     }
     var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
-    //console.log(cmd);
+    args.show && console.log(cmd);
     ex.spawn(cmd, function(code){
         cp.execSync(`rm -rf ${exp.tarFile}`);
         showTip(code);
@@ -117,13 +138,13 @@ exp.publish = function(){
         var key = pub.key ? `pub.key=${pub.key}` : '';
         cmd = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
         cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
-        //console.log(cmd);
+        args.show && console.log(cmd);
         ex.spawn(cmd, showTip);
     }else{
         var date = getDate();
         cmd = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
         cmd.push(`"nohup nobox pub_server port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-        //console.log(cmd);
+        args.show && console.log(cmd);
         ex.spawn(cmd, showTip);
     }
 };

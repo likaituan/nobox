@@ -118,9 +118,8 @@
                     var v = Req.headers[key.toLowerCase()];
                     exp.session[key] = v=="undefined" ? undefined : v;
                 });
-
                 //针对mongodb
-                if(exp.db){
+                if(exp.db && item.type=="mongodb"){
                     fun({
                         params: params,
                         session: exp.session,
@@ -253,8 +252,8 @@
             }
             Res.end('{"code":500}');
         });
-        //req.write(data);
-        req.write(data + "\n");
+        req.write(data);
+        //req.write(data + "\n");
         req.end();
     };
 
