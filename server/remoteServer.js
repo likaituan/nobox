@@ -145,8 +145,8 @@
                                 "Content-Type": "application/octet-stream;charset=utf-8"
                             };
                             if(data.filename){
-                                var suffix = data.filename.match(/\.\w+$/);
-                                headJson["Content-Disposition"] = `attachment;filename=${yourFilename}`;
+                                var suffix = /\.\w+$/.test(data.filename) && RegExp.lastMatch || "";
+                                headJson["Content-Disposition"] = `attachment;filename=${Date.now()}${suffix}`;
                             }
                             Res.writeHead(200, headJson);
 
