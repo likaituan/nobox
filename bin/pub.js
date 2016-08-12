@@ -110,7 +110,9 @@ exp.pack = function(){
             */
         }
         source = source.join(" ");
-        ex.spawn(`tar -zcf ${exp.tarFile} ${source}`, showTip);
+        var cmd = `tar -zcf ${exp.tarFile} ${source}`;
+        args.show && console.log(cmd);
+        ex.spawn(cmd, showTip);
     }else{
         console.log("source is empty");
     }

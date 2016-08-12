@@ -45,14 +45,13 @@
             }
             if(typeof(chkItems)=="function"){
                 chkItems = chkItems(params);
-                console.log(chkItems);
             }
             if(typeof chkItems!="object"){
                 if(typeof chkItems=="string"){
                     chkItems = chkItems.replace(/\{0\}/g, title);
                 }
                 if(chkItems!==true) {
-                    return chkItems;
+                    return [key, chkItems];
                 }
             }
             var val = params[key];
@@ -65,12 +64,12 @@
             }
             */
             if (val == "" && chkItems.chk_empty!==false) {
-                return str.format(chkItems.empty_title||exp.tip.empty, title);
+                return [key,str.format(chkItems.empty_title||exp.tip.empty, title)];
             }
             for (var k in chkItems) {
                 var v = exp.chkItem(title, val, k, chkItems[k], chkItems, params);
                 if (v !== true) {
-                    return v;
+                    return [key,v];
                 }
             }
         }

@@ -15,6 +15,7 @@
 	var params = req("./params");
 	var staticServer = req("./staticServer");
 	var remoteServer = req("./remoteServer");
+	var binary = req("./binary");
 
     //服务器加壳
     var globalRes;
@@ -25,6 +26,7 @@
         } catch (e) {
             console.log("Exceptional Server!");
             console.log(e.toString);
+            e.stack && console.log(e.stack);
             Res.end();
         }
     };
@@ -50,9 +52,21 @@
                 return staticServer.parse(Req, Res,staticServer.paths[path]);
             }
         }
+        for(var path in binary.paths){
+            if(uri.path.indexOf(path)==0){
+                return binary.parse(Req, Res, binary.paths[path]);
+            }
+            if((uri.path + "/") == (path)){
+                return binary.parse(Req, Res, binary.paths[path]);
+            }
+        }
+
+        console.log(`route '${Req.url}' no found`);
+        Res.end('{code:500}');
+        /*不知道谁加的,先注掉
         if(uri.path.indexOf(db.path)==0){
             return db.parse(Req, Res);
-        }
+        }*/
     };
 
     //报错处理
@@ -86,6 +100,7 @@
             var port = exp.port || 80;
             staticServer.init(exp);
             remoteServer.init();
+            //binary.init(exp.config.binary);
             global.httpx = http.createServer(ServerBox).listen(port).on("error", Error);
             exp.startTip!="hide" && str.log("Node Is Running At {0}:{1} Or localhost:{1}", ex.getIp(), port);
         };

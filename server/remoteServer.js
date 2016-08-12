@@ -48,7 +48,6 @@
                 exp.serviceList[path] = item.file;
             }
         }
-
 	};
 
     //报错处理
@@ -135,6 +134,30 @@
                     });
                     return;
                 }
+                if(item.type=="binary"){
+                    fun({
+                        params: params,
+                        session: exp.session
+                    }, function(data){
+                        var stream = data.stream || data.filename && fs.createReadStream(data.filename);
+                        if(stream) {
+                            var headJson = {
+                                "Content-Type": "application/octet-stream;charset=utf-8"
+                            };
+                            if(data.filename){
+                                var suffix = data.filename.match(/\.\w+$/);
+                                headJson["Content-Disposition"] = `attachment;filename=${yourFilename}`;
+                            }
+                            Res.writeHead(200, headJson);
+
+                            stream.pipe(Res);
+                        }else{
+                            Res.writeHead(404, {"Content-Type": "text/plain;charset=utf-8"});
+                            Res.end();
+                        }
+                    });
+                    return;
+                }
 
                 var ops = fun(params, exp.session);
                 if(typeof(ops)=="object" && ops.url) {
@@ -183,14 +206,16 @@
 
     //表单检查
     exp.chkForm = function (params, chk_params, Res, item) {
-        var msg = val.chk(params, chk_params, item.validate.rule);
-        if (msg === true) {
+        var ret = val.chk(params, chk_params, item.validate.rule);
+        if (ret === true) {
             if (params.hasOwnProperty("is_submit") && params.is_submit == 0) {
                 Res.end('{"code":0}');
                 return false;
             }
         } else {
-            Res.end(JSON.stringify({code: -3, message: (item.validate.prefix||"") + msg + (item.validate.suffix||"") }));
+            var [key, message] = ret;
+            message = (item.validate.prefix||"") + message + (item.validate.suffix||"");
+            Res.end(JSON.stringify({code: -3, message:message, key:key }));
             return false;
         }
         return true;

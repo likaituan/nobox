@@ -56,7 +56,7 @@ exports.getConfig = function(args, ops) {
 };
 
 //spawn封装
-exports.spawn = function(cmdExp, callback) {
+exports.spawn_bak = function(cmdExp, callback) {
     var args = cmdExp;
     if(typeof args=="string") {
         args = args.split(/\s+/);
@@ -79,6 +79,26 @@ exports.spawn = function(cmdExp, callback) {
 
     ls.on('close', callback);
 };
+
+//spawn封装
+exports.spawn = function(cmdExp, callback) {
+    var args = cmdExp;
+    if(typeof args=="string") {
+        args = args.split(/\s+/);
+    }
+    var cmd = args.shift();
+    if(cmd=="npm" && process.platform=="win32"){
+        cmd = "npm.cmd"
+    }
+    var sp = cp.spawn(cmd, args, {stdio:"inherit"});
+    sp.on("data", (data)=>{
+        console.log("error:",data.toString());
+    });
+    callback && sp.on('close', function(code){
+        callback(code!==0);
+    });
+};
+
 
 //获取进程ID
 //如找不到pid返回0
