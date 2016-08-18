@@ -24,5 +24,7 @@
     "validate", "form",
     "framework"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "ifun": "0.0.1"
+  }
 }

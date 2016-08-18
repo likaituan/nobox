@@ -24,7 +24,7 @@
             mongodb.connect(`mongodb://${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
                 if (err) {
                     console.log(err.message);
-                    console.log(`warning: your mongodb server was not installed or not started`);
+                    console.log(`warning: your mongodb server was not installed or not started, please input 'mongod' to run in command line`);
                     callback(0);
                 } else {
                     exp.db = db;
@@ -46,7 +46,7 @@
             mongodb.connect(`mongodb://${userInfo}${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
                 if (err) {
                     console.log(err.message);
-                    console.log(`warning: your mongodb server was not installed or not started`);
+                    console.log(`warning: your mongodb server was not installed or not started, please input 'mongod' to run in command line`);
                     callback(0);
                 } else {
                     exp.db = db;

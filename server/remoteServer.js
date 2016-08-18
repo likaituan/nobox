@@ -83,7 +83,8 @@
         }
 
         var re = new RegExp("^"+item.path,"i");
-        var url = Req.url.replace(re, "").split("/");
+        //var url = Req.url.replace(re, "").split("/");
+        var url = Req.url.replace(re, "").replace(/\?.*$/,"").split("/");
         var serviceList = exp.serviceList[item.path];
         var file = item.dir ? url.shift() : null;
 		var method = url.join("/");
@@ -106,6 +107,7 @@
                 return;
             }
             _params.getParams(Req, Res, function (srcParams) {
+                console.log("p=",srcParams);
                 //空格过滤
                 var params = {};
                 for(var k in srcParams) {
