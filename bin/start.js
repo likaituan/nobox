@@ -1,10 +1,12 @@
-var server = require("../server/core");
+var server = require("../server/server");
 var ex = require("./ex");
 
-module.exports = function(args, ops) {
-    var hasPath = false;
-    var config = ex.getConfig(args, ops);
-    server.config = config;
+module.exports = function(args, env) {
+    var ops = ex.getConfig(args, env);
+    (args.show||args.s) && console.log(ops);
+    server.init(ops);
+    /*
+
     hasPath = !!server.config.binary;//暂时
     if (config.hasFile) {
         if (config.static) {
@@ -64,7 +66,5 @@ module.exports = function(args, ops) {
     if (!hasPath) {
         throw `sorry, please set path parameter on command line or setting a '${ops.pk.name}.config.js' file on current directory!`;
     }
-    args.open && cp.execSync(`open http://localhost:${server.port}`);
-    args.show && console.log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
-    args.show && console.log(server);
+    */
 };

@@ -41,9 +41,9 @@ exports.parseDot = function(args, kk, v){
 };
 
 //获取配置信息
-exports.getConfig = function(args, ops) {
+exports.getConfig = function(args, env) {
     var config = {};
-    var configFile = `${args.path}/${ops.pk.name}.config.js`;
+    var configFile = `${args.path}/${env.engine.name}.config.js`;
     var hasFile = fs.existsSync(configFile);
     if (hasFile) {
         config = require(configFile);
@@ -51,7 +51,7 @@ exports.getConfig = function(args, ops) {
             config = config(args);
         }
     }
-    config.hasFile = hasFile;
+    config.env = env;
     return config;
 };
 

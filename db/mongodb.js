@@ -94,13 +94,13 @@
             if(item){
                 callback({data:item});
             }else{
-                callback({result:null});
+                callback({data:null});
             }
         });
     };
 
-    //保存
-    exp.save = function(tbName, params, callback) {
+    //添加
+    exp.add = function(tbName, params, callback) {
         var tb = exp.db.collection(tbName);
         tb.insertOne(params, function(err, result) {
             assert.equal(err, null);

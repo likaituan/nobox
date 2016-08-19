@@ -17,13 +17,31 @@
     var date = req("../core/date");
     var val = req("../validate/validate");
 
-    exp.paths = {};
+    exp.items = {};
     exp.serviceList = {};
 
     //初始化
-    exp.init = function () {
-        for(var path in exp.paths) {
-            var item = exp.paths[path];
+    exp.init = function (config, db) {
+        config = config || {};
+        config.items = config.items || [config];
+        if(db){
+            db.type = "mongodb";
+            config.items.push(db);
+        }
+        config.items.forEach(function (item) {
+            for (var k in config) {
+                if (k !== "items" && item[k] === undefined) {
+                    item[k] = config[k];
+                }
+            }
+            if(item.path) {
+                exp.items[item.path] = item;
+            }
+        });
+
+        //添加到映射表
+        for(var p in exp.items) {
+            var item = exp.items[p];
             if(item.validate){
                 if(!item.validate.rule) {
                     item.validate = {rule: item.validate};
@@ -38,14 +56,15 @@
             }else{
                 item.validate = {};
             }
+
             if (item.dir) {
-                var o = exp.serviceList[path] = {};
+                var o = exp.serviceList[p] = {};
                 fs.readdirSync(item.dir).forEach(function(fileName){
                     var key = fileName.split(".")[0];
                     o[key] = require(item.dir + key);
                 });
             } else if (item.file) {
-                exp.serviceList[path] = item.file;
+                exp.serviceList[p] = item.file;
             }
         }
 	};
@@ -127,9 +146,10 @@
                         db: exp.db,
                         ip: exp.getClientIp(Req)
                     }, function(ret){
+                        ret.code = ret.code || 0;
                         Res.end(JSON.stringify({
-                            success: true,
-                            code:0,
+                            success: ret.code==0,
+                            code: ret.code,
                             data: ret.data || {},
                             message: ret.message || ""
                         }));

@@ -11,20 +11,46 @@
     var pk = require("../package.json");
     var zlib = require('zlib');
 
-    exp.paths = {};
+    exp.items = {};
     exp.dir = "/";          //静态目录
 	exp.path = "/";         //静态路由
 	exp.model = null;       //模型
     exp.htmlList = {};
+    var ops;
 
     //初始化
-    exp.init = function(server){
-        exp.server = server;
-        for(var path in exp.paths) {
-            var item = exp.paths[path];
-            if (item.file) {
-                exp.htmlList[path] = fs.readFileSync(item.file);
+    exp.init = function(_ops){
+        ops = _ops;
+        var config = ops.static;
+        if(typeof config=="string"){
+            config = {
+                path: "/",
+                dir: config
+            };
+        }
+        config.items = config.items || [config];
+        if(ops.seekjs){
+            config.items.push({
+                path: "/seekjs/",
+                dir: ops.seekjs
+            });
+        }
+        config.items.forEach(function (item) {
+            for (var k in config) {
+                if (k !== "items" && item[k] === undefined) {
+                    item[k] = config[k];
+                }
             }
+            exp.items[item.path] = item;
+        });
+
+
+        for(var p in exp.items) {
+            var item = exp.items[p];
+            if (item.file) {
+                exp.htmlList[p] = fs.readFileSync(item.file);
+            }
+            exp.items[p] = item;
         }
     };
 
@@ -46,7 +72,7 @@
 
         var ext = file.split(".").slice(-1)[0] || "txt";
         var mimeType = mime[ext] || "text/plain";
-        var isGzip = exp.server.gzip && /^(?:js|css|html|txt|json)$/i.test(ext);
+        var isGzip = ops.gzip && /^(?:js|css|html|txt|json)$/i.test(ext);
 
         /*
          var encode = /^image\/|^audio\//.test(mimeType) ? 'binary' : 'utf-8';
