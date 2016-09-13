@@ -41,6 +41,8 @@
                     item[k] = config[k];
                 }
             }
+            item.dir = (item.dir||"").replace(/\/$/,"");
+            item.path = item.path || "/";
             exp.items[item.path] = item;
         });
 
@@ -94,7 +96,8 @@
         var res_headers = {};
         res_headers["Server"] = `${pk.name}/${pk.version}`;
         
-        var fullFile = item.dir + file;
+        var fullFile = `${item.dir}/${file}`;
+        //console.log(fullFile);
         var existFile = fs.existsSync(fullFile);
         if(existFile) {
             var gzipStream = zlib.createGzip();

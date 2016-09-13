@@ -41,9 +41,9 @@ exports.parseDot = function(args, kk, v){
 };
 
 //获取配置信息
-exports.getConfig = function(args, env) {
-    var config = {};
-    var configFile = `${args.path}/${env.engine.name}.config.js`;
+exports.getConfig = function(args, ua) {
+    var config = args;
+    var configFile = `${args.path}/${ua.engine.name}.config.js`;
     var hasFile = fs.existsSync(configFile);
     if (hasFile) {
         config = require(configFile);
@@ -51,7 +51,7 @@ exports.getConfig = function(args, env) {
             config = config(args);
         }
     }
-    config.env = env;
+    config.ua = ua;
     return config;
 };
 
@@ -90,7 +90,8 @@ exports.spawn = function(cmdExp, callback) {
     if(cmd=="npm" && process.platform=="win32"){
         cmd = "npm.cmd"
     }
-    var sp = cp.spawn(cmd, args, {stdio:"inherit"});
+    //var sp = cp.spawn(cmd, args, {stdio:"inherit"});
+    var sp = cp.spawn(cmd, args, {stdio:"inherit", shell:true});
     sp.on("data", (data)=>{
         console.log("error:",data.toString());
     });

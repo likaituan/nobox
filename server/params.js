@@ -9,7 +9,7 @@
 	var url = req("url");
 
 	//获取参数
-    exp.getParams = function(Req, Res, callback){
+    exp.getParams = function(Req, Res, item, callback){
         if(Req.method == "OPTIONS"){
             //Res.end('{"code":-99,"message":"取不到数据"}');
             //callback({});
@@ -23,11 +23,13 @@
                 postdata += postchunk;
             });
             Req.addListener("end", function () {
-                var params = qs.parse(postdata);
-                callback(params);
+                if(item.type!="bin"){
+                    postdata = qs.parse(postdata);
+                }
+                callback(postdata);
             });
         }else{
-            console.log(`目前nova不支持${Req.method}请求方式`);
+            console.log(`目前nobox不支持${Req.method}请求方式`);
             //callback({});
         }
     };

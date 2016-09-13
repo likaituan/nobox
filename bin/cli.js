@@ -28,7 +28,7 @@ cmdList.pub_server = require("./pub_server");   //服务端发版
 
 //查看版本
 if(args.v || args.version){
-    console.log(pk.version);
+    console.log(version);
 //命令
 }else if(cmdList[cmd]){
     cmdList[cmd](args, ops);

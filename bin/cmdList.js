@@ -9,7 +9,7 @@ module.exports = {
     //更新
     update: function(args, ops){
         console.log("now is updating, please wait a moment...");
-        var cmd = `${ops.sudo}${ops.inpm} install -g ${ops.pk.name}`;
+        var cmd = `${ops.sudo}${ops.npm} install -g ${ops.engine.name}`;
         if(args.more && args.more.length>0){
             cmd += `@${args.more[0]}`;
         }

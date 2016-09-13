@@ -16,7 +16,10 @@
     var str = req("../core/string");
     var date = req("../core/date");
     var val = req("../validate/validate");
-
+    var util = req("util");
+    var {getClientIp} = require("ifun");
+    var log = console.log;
+    
     exp.items = {};
     exp.serviceList = {};
 
@@ -71,9 +74,9 @@
 
     //报错处理
     var Error = function(err){
-        console.log(err);
-        err.code == "EADDRINUSE" && console.log("服务器地址及端口已被占用");
-        err && err.stack && console.log(err.stack);
+        log(err);
+        err.code == "EADDRINUSE" && log("服务器地址及端口已被占用");
+        err && err.stack && log(err.stack);
     };
 
 	//转发远程
@@ -93,7 +96,7 @@
         }
         Res.writeHead(200,resJson);
         if(Req.method=="OPTIONS"){
-            //console.log("send=",Res.send);
+            //log("send=",Res.send);
             //Res.send(200);
             //global.httpx.abort();
             Res.end();
@@ -112,7 +115,7 @@
 			if(item.dir){
 				fun = serviceList[file];
 				if(typeof(fun)!="object"){
-					console.log("service [ "+file+" ] 文件不存在");
+					log("service [ "+file+" ] 文件不存在");
 					Res.end('{"code":500}');
 					return;
 				}
@@ -121,41 +124,27 @@
 				fun = serviceList[method];
 			}
             if(typeof(fun)!="function"){
-                console.log("service [ "+method+" ] 方法不存在");
+                log("service [ "+method+" ] 方法不存在");
                 Res.end('{"code":500}');
                 return;
             }
-            _params.getParams(Req, Res, function (srcParams) {
-                console.log("p=",srcParams);
+            _params.getParams(Req, Res, item, function (srcParams) {
                 //空格过滤
                 var params = {};
-                for(var k in srcParams) {
-                    params[k] = typeof(srcParams[k])=="string" ? srcParams[k].trim() : srcParams[k];
+                if(item.type=="bin"){
+                    params = srcParams;
+                }else {
+                    for (var k in srcParams) {
+                        params[k] = typeof(srcParams[k]) == "string" ? srcParams[k].trim() : srcParams[k];
+                    }
                 }
-                //console.log(Req.headers);
+                //log(Req.headers);
                 exp.session = {};
                 (item.headerKeys||[]).forEach(function(key){
                     var v = Req.headers[key.toLowerCase()];
                     exp.session[key] = v=="undefined" ? undefined : v;
                 });
-                //针对mongodb
-                if(exp.db && item.type=="mongodb"){
-                    fun({
-                        params: params,
-                        session: exp.session,
-                        db: exp.db,
-                        ip: exp.getClientIp(Req)
-                    }, function(ret){
-                        ret.code = ret.code || 0;
-                        Res.end(JSON.stringify({
-                            success: ret.code==0,
-                            code: ret.code,
-                            data: ret.data || {},
-                            message: ret.message || ""
-                        }));
-                    });
-                    return;
-                }
+                exp.session.ip = exp.session.ip || getClientIp(Req);
                 if(item.type=="binary"){
                     fun({
                         params: params,
@@ -182,52 +171,71 @@
                 }
 
                 var ops = fun(params, exp.session);
-                if(typeof(ops)=="object" && ops.url) {
-                    ops.url = str.format(ops.url, params); //地址栏格式化
-                    //抛出表单检查的bug
-                    try {
-                        if(item.dataKeys){
-                            //item.dataKeys.forEach( key => params[key]=exp.session[key] );
-                            item.dataKeys.forEach(function(key){
-                                ops.data[key] = exp.session[key];
-                            });
-                        }
-                        exp.chkForm(params, ops.chk, Res, item) && exp.send(ops, item, Req, Res);
-                        //exp.send(ops, item, Req, Res);
-                    } catch (e) {
-                        Error(e);
-                        console.log("未知的异常错误");
-                        Res.end('{"code":500}');
-                    }
+
+                if(item.type=="json") {
+                    Res.end(JSON.stringify({
+                        success: true,
+                        code: 0,
+                        data: ops
+                    }));
                 }else{
-					/*
-					if(typeof(ops)=="object"){
-						Res.end(JSON.stringify(ops));
-					}else{
-						Res.end(ops);
-					}
-					*/
-					Res.end(JSON.stringify({
-						success: true,
-						code:0,
-						data: ops
-					}));
+                    if(item.dataKeys){
+                        item.dataKeys.forEach(function(key){
+                            ops.data[key] = exp.session[key];
+                        });
+                    }
+                    var isPass = exp.chkForm(params, ops.chk, Res, item);
+                    if(isPass){
+                        if(item.type=="mongodb"){
+                            if(!exp.db){
+                                log("you not install mongodb!");
+                                Res.end(`{"code":500}`);
+                                return;
+                            }
+                            var doRet = function(ret){
+                                ret.code = ret.code || 0;
+                                Res.end(JSON.stringify({
+                                    success: ret.code==0,
+                                    code: ret.code,
+                                    data: ret.data || {},
+                                    message: ret.message || ""
+                                }));
+                            };
+                            var doAction = function(){
+                                if(ops.action && ops.table && ops.data) {
+                                    exp.db[ops.action](ops.table, ops.data, doRet);
+                                }else{
+                                    doRet({code:0});
+                                }
+                            };
+                            if(ops.onBefore){
+                                ops.onBefore(exp.db, function(ret){
+                                    ret ? doRet(ret) : doAction();
+                                })
+                            }else {
+                                doAction();
+                            }
+                        }else {
+                            if(util.isFunction(ops)) {
+                                ops(Req, Res);
+                            }else if(util.isFunction(ops.callback)){
+                                ops.callback(Req, Res);
+                            }else {
+                                ops.url = str.format(ops.url, params); //地址栏格式化
+                                exp.send(ops, item, Req, Res);
+                            }
+                        }
+                    }
                 }
             });
         })();
     };
 
-    //获取客户端IP
-    //代码，第一段判断是否有反向代理IP(头信息：x-forwarded-for)，在判断connection的远程IP，以及后端的socket的IP
-    exp.getClientIp = function (req) {
-        return req.headers['x-forwarded-for'] ||
-            req.connection.remoteAddress ||
-            req.socket.remoteAddress ||
-            req.connection.socket.remoteAddress;
-    };
-
     //表单检查
     exp.chkForm = function (params, chk_params, Res, item) {
+        if(chk_params && !item.validate.rule){
+            throw `the item "${item.path}" not setting the rule`;
+        }
         var ret = val.chk(params, chk_params, item.validate.rule);
         if (ret === true) {
             if (params.hasOwnProperty("is_submit") && params.is_submit == 0) {
@@ -264,6 +272,18 @@
                 //,"Content-Length": data.length
             }
         };
+
+        if(item.type=="bin") {
+            data = new Buffer(ops.data);
+            var byteLen = Buffer.byteLength(data);
+            //var boundaryKey = ops.data.substr(data.indexOf("WebKitFormBoundary"),34);
+            //log({data,byteLen,boundaryKey});
+            //req.setHeader('Content-Type', 'multipart/form-data; boundary=----' + boundaryKey);
+            //req.setHeader('Content-Length', byteLen);
+            url.headers['Content-Type'] = 'multipart/form-data; charset=UTF-8';//; boundary=----' + boundaryKey;
+            url.headers['Content-Length'] = byteLen;
+        }
+
         for(var key in exp.session){
             url.headers[key] = exp.session[key] || "";
         }
@@ -274,14 +294,20 @@
             data = "";
             url.headers["Content-Length"] = 0;
         }
-        console.log("\n=============== Service Info ================");
-        console.log("TIME: "+date.now());
-        console.log("TYPE: " + ops.type);
-        console.log("URL: " + url.host+":"+url.port);
-        console.log("PATH: " + PATH);
-        console.log("DATA: " + data.replace(/(password\w*=)\w+/ig,"$1******"));
+        log("\n=============== Service Info ================");
+        log("TIME: "+date.now());
+        log("TYPE: " + ops.type);
+        log("URL: " + url.host+":"+url.port);
+        log("PATH: " + PATH);
+        //log("DATA: " + data.replace(/(password\w*=)\w+/ig,"$1******"));
+        log(`DATA: ${new Buffer(data)}`);
+        log(`Content-Type: ${url.headers['Content-Type']}`);
+        log(`Content-Length: ${url.headers['Content-Length']}`);
+        log(`User-Agent: ${Req.headers['user-agent']}`);
+        //log(`Headers:\n ${JSON.stringify(Req.headers,null,4)}`);
         var req = http.request(url, function (res) {
-            console.log('STATUS: ' + res.statusCode);
+            res.setEncoding("utf8");
+            log('STATUS: ' + res.statusCode);
             var body = "";
             res.on('data', function (chunk) {
                 body += chunk;
@@ -293,9 +319,9 @@
         });
         req.on('error', function (err) {
             if(err.code=="ECONNREFUSED"){
-                console.log("连接JAVA被拒绝.........");
+                log("连接JAVA被拒绝.........");
             }else{
-                console.log("远程服务器出错, 错误代码是: "+err.code+".................");
+                log("远程服务器出错, 错误代码是: "+err.code+".................");
             }
             Res.end('{"code":500}');
         });
@@ -309,9 +335,9 @@
         var jsonObj = {};
         try {
             jsonObj = JSON.parse(body);
-            console.log("RESULT: "+JSON.stringify(jsonObj,null,4));
+            log("RESULT: "+JSON.stringify(jsonObj,null,4));
         } catch (e) {
-            console.log("RESULT: "+body);
+            log("RESULT: "+body);
             Res.end('{"code":500}');
             return;
         }
@@ -324,7 +350,5 @@
         var jsonStr = JSON.stringify(jsonObj);
         Res.end(jsonStr);
     };
-
-
 
 }(require, exports);

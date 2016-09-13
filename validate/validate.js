@@ -39,37 +39,45 @@
             }
             title = `"${title}"`;
 
-            var chkItems = rules[rule] || Rules[rule];
-            if(!chkItems) {
-                throw str.format("the rule {0} is not find", rule);
-            }
-            if(typeof(chkItems)=="function"){
-                chkItems = chkItems(params);
-            }
-            if(typeof chkItems!="object"){
-                if(typeof chkItems=="string"){
-                    chkItems = chkItems.replace(/\{0\}/g, title);
+            //新加快速非空检测
+            if (rule=="no-empty") {
+                if(params[key] == "") {
+                    return [key, str.format(exp.tip.empty, title)];
                 }
-                if(chkItems!==true) {
-                    return [key, chkItems];
+            }else {
+
+                var chkItems = rules[rule] || Rules[rule];
+                if (!chkItems) {
+                    throw str.format("the rule {0} is not find", rule);
                 }
-            }
-            var val = params[key];
-            /*
-            var noRequired = chkItems.hasOwnProperty("required") && chkItems.required==0;
-            if (noRequired && val == "") {
-                continue;
-            } else if (!noRequired && val == "") {
-                return str.format(chkItems.empty||exp.tip.empty, title);
-            }
-            */
-            if (val == "" && chkItems.chk_empty!==false) {
-                return [key,str.format(chkItems.empty_title||exp.tip.empty, title)];
-            }
-            for (var k in chkItems) {
-                var v = exp.chkItem(title, val, k, chkItems[k], chkItems, params);
-                if (v !== true) {
-                    return [key,v];
+                if (typeof(chkItems) == "function") {
+                    chkItems = chkItems(params);
+                }
+                if (typeof chkItems != "object") {
+                    if (typeof chkItems == "string") {
+                        chkItems = chkItems.replace(/\{0\}/g, title);
+                    }
+                    if (chkItems !== true) {
+                        return [key, chkItems];
+                    }
+                }
+                var val = params[key];
+                /*
+                 var noRequired = chkItems.hasOwnProperty("required") && chkItems.required==0;
+                 if (noRequired && val == "") {
+                 continue;
+                 } else if (!noRequired && val == "") {
+                 return str.format(chkItems.empty||exp.tip.empty, title);
+                 }
+                 */
+                if (val == "" && chkItems.chk_empty !== false) {
+                    return [key, str.format(chkItems.empty_title || exp.tip.empty, title)];
+                }
+                for (var k in chkItems) {
+                    var v = exp.chkItem(title, val, k, chkItems[k], chkItems, params);
+                    if (v !== true) {
+                        return [key, v];
+                    }
                 }
             }
         }

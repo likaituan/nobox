@@ -22,7 +22,8 @@ var cmdFun = function(cmdExp) {
 
 var getDate = function(){
     var timestamp = Date.now() - new Date().getTimezoneOffset()*60000;
-    var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
+    //var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
+    var date = new Date(timestamp).toISOString().split("T")[0].replace(/\D/g,"");
     return date;
 };
 

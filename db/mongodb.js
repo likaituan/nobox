@@ -18,31 +18,10 @@
     exp.config = {};
 
     //连接
-    exp.init_bak = function (callback) {
-        if (exp.isInstalled) {
-            var port = exp.config.port || 27017;
-            mongodb.connect(`mongodb://${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
-                if (err) {
-                    console.log(err.message);
-                    console.log(`warning: your mongodb server was not installed or not started, please input 'mongod' to run in command line`);
-                    callback(0);
-                } else {
-                    exp.db = db;
-                    console.log(`MongoDB Is Running At ${exp.config.ip}:${port} by ${exp.config.dbName}`);
-                    callback(exp);
-                }
-                //db.close();
-            });
-        } else {
-            console.log("warning: you was not installed mongodb package!");
-            callback(0);
-        }
-    };
-
     exp.init = function (callback) {
         if (exp.isInstalled) {
             var port = exp.config.port || 27017;
-            var userInfo = exp.config.userName&&exp.config.password ? exp.config.userName +":"+exp.config.password+"@":"";
+            var userInfo = exp.config.userName&&exp.config.password ? exp.config.userName +":"+exp.config.password+"@" : "";
             mongodb.connect(`mongodb://${userInfo}${exp.config.ip}:${port}/${exp.config.dbName}`, function (err, db) {
                 if (err) {
                     console.log(err.message);
@@ -61,6 +40,20 @@
         }
     };
 
+    //操作结果
+    var operateResult = function(callback){
+        return function(err, result){
+            if(err) {
+                callback({message: err+":"+result});
+            }else{
+                callback({code:0});
+            }
+        }
+    };
+
+
+    /*=====================批量操作====================*/
+
     //查找
     exp.find = function (tbName, cond, callback) {
         if (arguments.length == 2) {
@@ -71,30 +64,14 @@
         var tb = exp.db.collection(tbName);
         tb.find().each(function (err, doc) {
             assert.equal(err, null);
-            if (doc) {
-                arr.push(doc);
-            } else {
-                callback({data: arr});
-            }
-        });
-    };
-
-    //查找一条
-    exp.findOne_bak = function (tbName, cond, callback){
-        exp.find(tbName, cond, function(data){
-            callback({data: data[0]});
-        }).limit(1);
-    };
-
-    //查找一条
-    exp.findOne = function (tbName, params, callback){
-        var tb = exp.db.collection(tbName);
-        tb.findOne(params,function (err,item) {
-            assert.equal(err, null);
-            if(item){
-                callback({data:item});
-            }else{
-                callback({data:null});
+            if(err){
+                callback({code:500});
+            }else {
+                if (doc) {
+                    arr.push(doc);
+                } else {
+                    callback({data: arr});
+                }
             }
         });
     };
@@ -103,8 +80,6 @@
     exp.add = function(tbName, params, callback) {
         var tb = exp.db.collection(tbName);
         tb.insertOne(params, function(err, result) {
-            assert.equal(err, null);
-            //console.log("Inserted a document into the restaurants collection.");
             callback({message:"add success!"});
         });
     };
@@ -113,19 +88,48 @@
     exp.remove = function(tbName, params, callback) {
         var tb = exp.db.collection(tbName);
         tb.deleteMany(params, function(err, result) {
-            assert.equal(err, null);
             callback({message:"remove success!"});
         });
     };
 
+    //更新单个
+    exp.update = function (tbName, ops, callback) {
+        var tb = exp.db.collection(tbName);
+        var query = JSON.parse(ops.query);
+        var update = JSON.parse(ops.update);
+        var newCallback = operateResult(callback);
+        tb.update(query,{$set:update}, newCallback);
+    };
+
+
+    /*==============单个操作================*/
+
+
+    //查找单个
+    exp.findOne = function (tbName, params, callback){
+        var tb = exp.db.collection(tbName);
+        tb.findOne(params, function(err, result){
+            if(err) {
+                callback({message: err+":"+result});
+            }else{
+                callback(result);
+            }
+        });
+    };
+
+    //添加单个
+    exp.addOne = function(tbName, params, callback) {
+        var tb = exp.db.collection(tbName);
+        var newCallback = operateResult(callback);
+        tb.insertOne(params, newCallback);
+    };
+
     //删除单个
     exp.removeOne = function(tbName, params, callback) {
+        //params = JSON.parse(JSON.stringify(params)); //有bug,先这样
         var tb = exp.db.collection(tbName);
-        params = JSON.parse(JSON.stringify(params));
-        tb.deleteOne(params, function(err, result) {
-            assert.equal(err, null);
-            callback({message:"remove success!"});
-        });
+        var newCallback = operateResult(callback);
+        tb.deleteOne(params, newCallback);
     };
 
 })(require, exports);

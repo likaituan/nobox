@@ -1,14 +1,12 @@
-<h1>欢迎使用node盒子</h1>
-<h3>这是一个很棒的nodejs框架平台</h3>
+## 欢迎使用node盒子
+***
+### 功能
 
-<ul>
-    <li>静态服务器</li>
-    <li>转发服务器</li>
-    <li>socket服务器</li>
-</ul>
+1. 静态服务器
+2. 转发服务器
+3. socket服务器
 
-
-gitignore忽略配置文件设置:
-git rm -r --cached .
-git add .
-git commit -m 'update .gitignore'
+### 常用命令
+* nobox start 启动
+* nobox pub 发版
+* nobox update 更新
