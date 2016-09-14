@@ -1,25 +1,8 @@
-## 欢迎使用node盒子
-***
-### 功能
-
-1. 静态服务器
-2. 转发服务器
-3. socket服务器
-
-### 常用命令
-* nobox start 启动
-* nobox pub 发版
-* nobox update 更新
-
-
-
-### 示例
-```javascript
 var env = require("./node/env");
 
 module.exports = function(args){
     var [java, node, pub] = env.getEnv(args);
-     var config = {
+    var config = {
         //静态服务器
         static: {
             path: "/",
@@ -90,4 +73,3 @@ module.exports = function(args){
 
     return config;
 };
-```
