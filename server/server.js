@@ -12,7 +12,7 @@
 	var remoteServer = require("./remoteServer");
     var binary = require("./binary");
     var mongodb = require("../db/mongodb");
-    var {cmd} = require("ifun");
+    var {cmd,log} = require("ifun");
     var ops;
 
     var globalRes;
@@ -68,6 +68,7 @@
 
         //目前只能用post
         if(ops.routes && ops.routes[req.url]){
+            req.crossDomain = ops.crossDomain;
             ops.routes[req.url](req, res);
             return;
         }

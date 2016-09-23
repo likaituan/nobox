@@ -3,35 +3,37 @@
   * Created by likaituan on 15/8/27.
   */
 
-~function(req,exp){
-	"use strict";
-	var qs = req("querystring");
-	var url = req("url");
 
-	//获取参数
-    exp.getParams = function(Req, Res, item, callback){
-        if(Req.method == "OPTIONS"){
-            //Res.end('{"code":-99,"message":"取不到数据"}');
-            //callback({});
-        }else if(Req.method == "GET"){
-            var params = url.parse(Req.url,true).query;
-            callback(params);
-        }
-        else if(Req.method=="POST") {
-            var postdata = "";
-            Req.addListener("data", function (postchunk) {
-                postdata += postchunk;
-            });
-            Req.addListener("end", function () {
-                if(item.type!="bin"){
-                    postdata = qs.parse(postdata);
-                }
-                callback(postdata);
-            });
-        }else{
-            console.log(`目前nobox不支持${Req.method}请求方式`);
-            //callback({});
-        }
-    };
+var qs = require("querystring");
+var url = require("url");
+var multipart =  require("./multipart");
 
-}(require,exports);
+//获取参数
+exports.getParams = function(req, callback){
+    if(/multipart/.test(req.headers["content-type"])){
+        return multipart.parseFormData(req, callback);
+    }
+
+    var data = {};
+    if(req.method == "GET"){
+        data.fields = url.parse(req.url,true).query;
+        callback(data);
+    }
+    else if(req.method=="POST") {
+        var postdata = "";
+        req.addListener("data", function (postchunk) {
+            postdata += postchunk;
+        });
+        req.addListener("end", function () {
+            var fields = qs.parse(postdata);
+            data.fields = {};
+            for (var k in fields) {
+                data.fields[k] = typeof(fields[k]) == "string" ? fields[k].trim() : fields[k];  //空格过滤
+            }
+            callback(data);
+        });
+    }else{
+        console.log(`目前nobox不支持${req.method}请求方式`);
+        //callback(data);
+    }
+};
