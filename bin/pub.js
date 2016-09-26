@@ -5,6 +5,7 @@
 var fs = require("fs");
 var path = require("path");
 var cp = require("child_process");
+var {log,end} = require("ifun");
 var ex = require("./ex");
 
 var args = {};
@@ -41,11 +42,11 @@ var runCmd = function() {
             if (code == 0) {
                 runCmd();
             } else {
-                console.log("pub before fail!")
+                log("pub before fail!")
             }
         });
     }else{
-        console.log("pub before success!");
+        log("pub before success!");
         startPub();
     }
 };
@@ -56,14 +57,14 @@ var steps = ["pack", "upload", "publish"];
 var showTip = function(code){
     var tag = steps.shift();
     if(code==0) {
-        console.log(`${tag} success!`);
+        log(`${tag} success!`);
         var method = steps[0];
         if(method){
-            console.log(`${method}ing...`);
+            log(`${method}ing...`);
             exp[method]();
         }
     } else {
-        console.log(`${tag} error: ${code}`);
+        log(`${tag} error: ${code}`);
     }
 };
 
@@ -88,7 +89,7 @@ var startPub = function(){
     exp.tarFile = `${dir}/bin.tar.gz`;
     if(fs.existsSync(exp.tarFile)){
         steps.shift();
-        console.log(`uploading...`);
+        log(`uploading...`);
         exp.upload();
     }else {
         exp.pack();
@@ -106,16 +107,16 @@ exp.pack = function(){
             source.push("./nobox.config.js");
             /*
             var deps = getNodeDeps("./nobox.config", [], {});
-            console.log(deps);
+            log(deps);
             source = source.concat(deps);
             */
         }
         source = source.join(" ");
         var cmd = `tar -zcf ${exp.tarFile} ${source}`;
-        args.show && console.log(cmd);
+        args.show && log(cmd);
         ex.spawn(cmd, showTip);
     }else{
-        console.log("source is empty");
+        log("source is empty");
     }
 };
 
@@ -123,11 +124,20 @@ exp.pack = function(){
 exp.upload = function() {
     var o = mid || pub;
     exp.sshArgs = "";
-    if (o.key && fs.existsSync(o.key)) {
-        exp.sshArgs = `-i ${o.key}`;
+    if (o.key){
+        if(fs.existsSync(o.key)){
+            var mode = fs.statSync(o.key).mode.toString(8);
+            if(/[40]{3}$/.test(mode)) {
+                exp.sshArgs = `-i ${o.key}`;
+            }else{
+                end(`the key file must locked, please use the "chmod" command to change mode!`)
+            }
+        }else{
+            end(`the key path "${o.key}" is no exist!`)
+        }
     }
     var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
-    args.show && console.log(cmd);
+    args.show && log(cmd);
     ex.spawn(cmd, function(code){
         cp.execSync(`rm -rf ${exp.tarFile}`);
         showTip(code);
@@ -141,13 +151,13 @@ exp.publish = function(){
         var key = pub.key ? `pub.key=${pub.key}` : '';
         cmd = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
         cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
-        args.show && console.log(cmd);
+        args.show && log(cmd);
         ex.spawn(cmd, showTip);
     }else{
         var date = getDate();
         cmd = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
         cmd.push(`"nohup nobox pub_server port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-        args.show && console.log(cmd);
+        args.show && log(cmd);
         ex.spawn(cmd, showTip);
     }
 };
@@ -186,6 +196,6 @@ module.exports = function(_args, _ops) {
         mid = pub.mid;
         mid.user = mid.user || "root";
     }
-    args.show && console.log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
+    args.show && log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
     chkPubBefore();
 };

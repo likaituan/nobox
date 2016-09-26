@@ -67,7 +67,7 @@
         }
 
         var re = new RegExp("^"+item.path,"i");
-        var file = Req.url.replace(/\?.*$/,"").replace(re, "");
+        var file = decodeURI(Req.url).replace(/\?.*$/,"").replace(re, "");
         if (file == item.path || (file+"/") == item.path) {
             file = "index.html";
         }
@@ -97,13 +97,15 @@
         res_headers["Server"] = `${pk.name}/${pk.version}`;
         
         var fullFile = `${item.dir}/${file}`;
-        //console.log(fullFile);
         var existFile = fs.existsSync(fullFile);
         if(existFile) {
             var gzipStream = zlib.createGzip();
             res_headers["Content-Type"] = `${mimeType};charset=utf-8`;
-
             var stream = fs.createReadStream(fullFile);
+            if(file.endsWith(".mp3")){
+                var byteLen = fs.statSync(fullFile).size;
+                res_headers["Content-Range"] = `bytes 0-${byteLen-1}/${byteLen}`;
+            }
             if (isGzip) {
                 res_headers["Content-Encoding"] = "gzip";
                 Res.writeHead(200, res_headers);

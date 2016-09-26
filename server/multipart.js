@@ -4,6 +4,16 @@
  */
 
 var Stream = require('stream');
+var {byteFormat} = require("ifun");
+
+var getFileField = function(file){
+    var field = {};
+    field.filename = file.filename;
+    field.contentType = file.contentType;
+    field.content = "[binary data]";
+    field.size = byteFormat(file.byte);
+    return field;
+};
 
 //获取Form提交的数据
 exports.getFormData = function(req, callback){
@@ -34,11 +44,14 @@ exports.parseFormData = function(req, callback){
                 data.fields[key] = val;
             });
             bstr.replace(/\bname="([^"]+)"; filename="([^"]+)"\s+Content-Type: (\S+)\s+([\s\S]+)\r\n--/, function (_, name, filename, contentType, content) {
+                content = new Buffer(content, "binary");
                 data.files[name] = {
                     filename: new Buffer(filename, "binary").toString("utf-8"),
                     contentType: new Buffer(contentType, "binary").toString("utf-8"),
-                    content: new Buffer(content, "binary")
-                }
+                    content: content,
+                    byte: content.length
+                };
+                data.fields[name] = getFileField(data.files[name]);
             });
         });
         callback(data);

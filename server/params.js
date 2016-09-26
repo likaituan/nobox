@@ -10,7 +10,7 @@ var multipart =  require("./multipart");
 
 //获取参数
 exports.getParams = function(req, callback){
-    if(/multipart/.test(req.headers["content-type"])){
+    if(req.isMultipart){
         return multipart.parseFormData(req, callback);
     }
 

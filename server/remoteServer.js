@@ -83,6 +83,7 @@ exports.init = function (config, db) {
 exports.parse = function (req, res, item) {
     ops = {};
     resHeaders = {};
+    req.isMultipart = /multipart/.test(req.headers["content-type"]);
 
     resHeaders["Content-Type"] = "text/html;charset=utf-8";
     resHeaders["Server"] = `${pk.name}/${pk.version}`;
@@ -96,17 +97,12 @@ exports.parse = function (req, res, item) {
         }
         resHeaders["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS";//"PUT,POST,GET,DELETE,OPTIONS";
     }
-    res.writeHead(req.method=="OPTIONS"?204:200, resHeaders);
-
     if(req.method=="OPTIONS"){
-        //log("send=",res.send);
-        //res.send(200);
-        //global.httpx.abort();
-        log("options:"+req.url);
-        //res.end('{"code":-99,"message":"取不到数据"}');
+        res.writeHead(204, resHeaders);
         res.end();
         return;
     }
+    res.writeHead(200, resHeaders);
 
     var re = new RegExp("^"+item.path,"i");
     //var url = req.url.replace(re, "").split("/");
@@ -181,7 +177,7 @@ exports.parse = function (req, res, item) {
                         ops.server.data[key] = exports.session[key];
                     });
                 }
-                var isPass = exports.chkForm(ops.data.fields, ops.chk, res, item);
+                var isPass = exports.chkForm(ops.data.fields, ops.server.chk, res, item);
                 if(isPass){
                     if(item.type=="mongodb"){
                         if(!exports.db){
@@ -256,9 +252,12 @@ exports.send = function (ops, item, req, res) {
     ops.query = ({
         "json": jsonData,
         "x-www-form-urlencoded": uriData
-    })[contentType] || JSON.stringify(ops.data.fields);//"[binary data]";
+    })[contentType];
+
+    if(req.isMultipart){
+        ops.query = JSON.stringify(ops.data.fields);
+    }
     var PATH = (item.prefix||"") + ops.server.url;
-    var isMultipart = /multipart/.test(req.headers["content-type"]);
 
     var options = {
         host: item.host,
@@ -273,7 +272,7 @@ exports.send = function (ops, item, req, res) {
         }
     };
 
-    if(isMultipart){
+    if(req.isMultipart){
         options.headers["Content-Type"] = req.headers["content-type"];
         options.headers["Content-Length"] = req.headers["content-length"];
     }
@@ -314,7 +313,7 @@ exports.send = function (ops, item, req, res) {
     log(`User-Agent: ${req.headers['user-agent']}`);
     //log(`Headers:\n ${JSON.stringify(req.headers,null,4)}`);
 
-    exports.send2remote([options, ops, isMultipart], function(rs){
+    exports.send2remote([options, ops, req.isMultipart], function(rs){
         if(rs.code==200){
             exports.parseResult(rs.data,res,item,ops);
         }else{

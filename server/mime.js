@@ -20,6 +20,7 @@ module.exports = {
     ico: "image/x-icon",
 
 	mp3: "audio/mp3",
+	flac: "audio/mp3",
 
 	_end_: 0
 };
