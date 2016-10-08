@@ -4,8 +4,7 @@
 
 var fs = require("fs");
 var path = require("path");
-var cp = require("child_process");
-var {log,end} = require("ifun");
+var {log,end,cmd} = require("ifun");
 var ex = require("./ex");
 
 var args = {};
@@ -15,6 +14,7 @@ var config = {};
 var exp = {};
 var pub;
 var mid;
+var localDir;
 
 //cmd对外接口
 var cmdFun = function(cmdExp) {
@@ -28,6 +28,15 @@ var getDate = function(){
     return date;
 };
 
+//远程登录发版
+var remotePub = function(){
+    var sshKey = getSshKey(pub.key, pub.keyDir);
+    var cmdExp = `ssh ${sshKey} ${pub.user}@${pub.ip} "nobox pub test localDir=${mid.gitDir}"`;
+    args.show && log(cmdExp);
+    cmd(cmdExp, localDir, showTip);
+};
+
+
 //上传前检查
 var chkPubBefore = function(){
     config.onPubBefore && !args.onlyPub && config.onPubBefore(cmdFun);
@@ -38,11 +47,12 @@ var chkPubBefore = function(){
 var runCmd = function() {
     var cmdExp = exp.cmdList.shift();
     if(cmdExp) {
-        ex.spawn(cmdExp, (code) => {
+        log({cmdExp, localDir});
+        cmd(cmdExp, localDir, code => {
             if (code == 0) {
                 runCmd();
             } else {
-                log("pub before fail!")
+                log("pub before fail!");
             }
         });
     }else{
@@ -103,8 +113,9 @@ exp.pack = function(){
     pub.nodeDir && source.push(pub.nodeDir);
 
     if(source.length>0) {
-        if(fs.existsSync("./nobox.config.js")){
-            source.push("./nobox.config.js");
+        var configFile = `${localDir}/nobox.config.js`;
+        if(fs.existsSync(configFile)){
+            source.push("nobox.config.js");
             /*
             var deps = getNodeDeps("./nobox.config", [], {});
             log(deps);
@@ -112,53 +123,62 @@ exp.pack = function(){
             */
         }
         source = source.join(" ");
-        var cmd = `tar -zcf ${exp.tarFile} ${source}`;
-        args.show && log(cmd);
-        ex.spawn(cmd, showTip);
+        var cmdExp = `tar -zcf ${exp.tarFile} ${source}`;
+        args.show && log(cmdExp);
+        cmd(cmdExp, localDir, showTip);
     }else{
         log("source is empty");
     }
 };
 
+//获取key
+var getSshKey = function(key, dir){
+    log({dir,key});
+    if(key){
+        if(dir){
+            key = `${dir}/${key}`;
+        }
+        if (fs.existsSync(key)) {
+            var mode = fs.statSync(key).mode.toString(8);
+            if (/[40]{3}$/.test(mode)) {
+                return `-i ${key}`;
+            } else {
+                end(`the key file must locked, please use the "chmod" command to change mode!`)
+            }
+        } else {
+            end(`the key path "${key}" is no exist!`)
+        }
+    }
+    return "";
+};
+
 //上传
 exp.upload = function() {
     var o = mid || pub;
-    exp.sshArgs = "";
-    if (o.key){
-        if(fs.existsSync(o.key)){
-            var mode = fs.statSync(o.key).mode.toString(8);
-            if(/[40]{3}$/.test(mode)) {
-                exp.sshArgs = `-i ${o.key}`;
-            }else{
-                end(`the key file must locked, please use the "chmod" command to change mode!`)
-            }
-        }else{
-            end(`the key path "${o.key}" is no exist!`)
-        }
-    }
-    var cmd = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
-    args.show && log(cmd);
-    ex.spawn(cmd, function(code){
-        cp.execSync(`rm -rf ${exp.tarFile}`);
+    exp.sshArgs = getSshKey(o.key, o.keyDir);
+    var cmdExp = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
+    args.show && log(cmdExp);
+    cmd(cmdExp, localDir, function(code){
+        cmd(`rm -rf ${exp.tarFile}`, localDir);
         showTip(code);
     });
 };
 
 //发版
 exp.publish = function(){
-    var cmd;
+    var cmdExp;
     if(mid){
         var key = pub.key ? `pub.key=${pub.key}` : '';
-        cmd = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
-        cmd.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
-        args.show && log(cmd);
-        ex.spawn(cmd, showTip);
+        cmdExp = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
+        cmdExp.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
+        args.show && log(cmdExp);
+        cmd(cmdExp, localDir, showTip);
     }else{
         var date = getDate();
-        cmd = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
-        cmd.push(`"nohup nobox pub_server port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-        args.show && log(cmd);
-        ex.spawn(cmd, showTip);
+        cmdExp = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
+        cmdExp.push(`"nohup nobox deploy port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
+        args.show && log(cmdExp);
+        cmd(cmdExp, localDir, showTip);
     }
 };
 
@@ -169,15 +189,19 @@ module.exports = function(_args, _ops) {
 
     exp.cmdList = [];
     args.env = args.more[0];
+    localDir = args.localDir || args.path || process.cwd();
 
     if (!args.env) {
         throw "please select a environment before!";
     }
     try {
-        args.currentBranch = cp.execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
+        args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", localDir);
     }catch(e){}
 
+    log({currentBranch:args.currentBranch, localDir});
+
     config = ex.getConfig(args, ops);
+    args.show && log({config});
     pub = config.pub || args.pub;
     if(!pub) {
         throw "please setting publish option 'pub' before!";
@@ -195,6 +219,9 @@ module.exports = function(_args, _ops) {
     if(pub.mid) {
         mid = pub.mid;
         mid.user = mid.user || "root";
+        if(mid.gitDir){
+            return remotePub();
+        }
     }
     args.show && log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
     chkPubBefore();

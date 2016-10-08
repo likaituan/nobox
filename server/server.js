@@ -58,7 +58,7 @@ var resFail = function(rs){
 
 //服务器
 var Server = function (req, res) {
-    log(req.url);
+    //log(req.url);
     res.success = resSuccess;
     res.fail = resFail;
     globalRes = res;

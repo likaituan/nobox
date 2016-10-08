@@ -1,6 +1,6 @@
 {
     "name": "nobox",
-    "version": "1.4.9",
+    "version": "1.6.2",
     "main": "server/core.js",
     "bin": {
         "nobox": "./bin/cli.js"
@@ -32,6 +32,6 @@
         "framework"
     ],
     "dependencies": {
-        "ifun": "0.1.2"
+        "ifun": "0.1.6"
     }
 }
