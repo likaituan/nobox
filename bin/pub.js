@@ -30,9 +30,11 @@ var getDate = function(){
 
 //远程登录发版
 var remotePub = function(){
-    var sshKey = getSshKey(pub.key, pub.keyDir);
-    var cmdExp = `ssh ${sshKey} ${pub.user}@${pub.ip} "nobox pub test localDir=${mid.gitDir}"`;
-    args.show && log(cmdExp);
+    var sshKey = getSshKey(mid.key, pub.keyDir);
+    var isShow = args.show ? "--show" : "";
+    var cmdExp = `ssh ${sshKey} ${mid.user}@${mid.ip} "nobox pub test ${isShow} localDir=${mid.gitDir}"`;
+    steps = ["publish"];
+    log("now is login to publish machine, please wait a moment...");
     cmd(cmdExp, localDir, showTip);
 };
 
@@ -47,7 +49,6 @@ var chkPubBefore = function(){
 var runCmd = function() {
     var cmdExp = exp.cmdList.shift();
     if(cmdExp) {
-        log({cmdExp, localDir});
         cmd(cmdExp, localDir, code => {
             if (code == 0) {
                 runCmd();
@@ -124,7 +125,6 @@ exp.pack = function(){
         }
         source = source.join(" ");
         var cmdExp = `tar -zcf ${exp.tarFile} ${source}`;
-        args.show && log(cmdExp);
         cmd(cmdExp, localDir, showTip);
     }else{
         log("source is empty");
@@ -133,7 +133,6 @@ exp.pack = function(){
 
 //获取key
 var getSshKey = function(key, dir){
-    log({dir,key});
     if(key){
         if(dir){
             key = `${dir}/${key}`;
@@ -157,7 +156,6 @@ exp.upload = function() {
     var o = mid || pub;
     exp.sshArgs = getSshKey(o.key, o.keyDir);
     var cmdExp = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${o.ip}:${o.dir}/bin.tar.gz`;
-    args.show && log(cmdExp);
     cmd(cmdExp, localDir, function(code){
         cmd(`rm -rf ${exp.tarFile}`, localDir);
         showTip(code);
@@ -171,13 +169,11 @@ exp.publish = function(){
         var key = pub.key ? `pub.key=${pub.key}` : '';
         cmdExp = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
         cmdExp.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.remoteUser=${pub.user} pub.remoteIp=${pub.ip} pub.remotePort=${pub.port} pub.remoteDir=${pub.dir}"`);
-        args.show && log(cmdExp);
         cmd(cmdExp, localDir, showTip);
     }else{
         var date = getDate();
         cmdExp = `ssh ${exp.sshArgs} ${pub.user}@${pub.ip}`.split(/\s+/);
         cmdExp.push(`"nohup nobox deploy port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-        args.show && log(cmdExp);
         cmd(cmdExp, localDir, showTip);
     }
 };
@@ -192,16 +188,13 @@ module.exports = function(_args, _ops) {
     localDir = args.localDir || args.path || process.cwd();
 
     if (!args.env) {
-        throw "please select a environment before!";
+        end("please select a environment before!");
     }
     try {
         args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", localDir);
     }catch(e){}
 
-    log({currentBranch:args.currentBranch, localDir});
-
     config = ex.getConfig(args, ops);
-    args.show && log({config});
     pub = config.pub || args.pub;
     if(!pub) {
         throw "please setting publish option 'pub' before!";
@@ -216,6 +209,7 @@ module.exports = function(_args, _ops) {
     if (!pub.dir) {
         throw "please setting pub option 'remoteDir' before!";
     }
+    args.show && log({args,ops,config});
     if(pub.mid) {
         mid = pub.mid;
         mid.user = mid.user || "root";
@@ -223,6 +217,5 @@ module.exports = function(_args, _ops) {
             return remotePub();
         }
     }
-    args.show && log("args=",args,"\n\nops=",ops,"\n\nconfig=",config);
     chkPubBefore();
 };
