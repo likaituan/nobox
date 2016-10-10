@@ -6,8 +6,10 @@ var fs = require("fs");
 var fs2 = require("../core/fs2");
 var ex = require("./ex");
 var start = require("./start");
+var {getArgs} = require("ifun");
 
-module.exports = function(args, ops) {
+module.exports = function(ua) {
+    var args = getArgs("cmd");
     args.node = args.node || args.env;
     args.java = args.java || args.env;
 

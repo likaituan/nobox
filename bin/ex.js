@@ -4,15 +4,13 @@ var {requireJson,cmd} = require("ifun");
 
 //获取配置信息
 exports.getConfig = function(args, ua) {
-    var configFile = `${args.localDir||args.path}/${ua.engine.name}.config.js`;
+    var configFile = `${args.dir}/${ua.engine.name}.config.js`;
     var config = requireJson(configFile);
     if (isFunction(config)) {
         config = config(args);
     }
+    config.args = args;
     config.ua = ua;
-    for(var k in args){
-        config[k] = args[k];
-    }
     return config;
 };
 
@@ -26,7 +24,10 @@ exports.getPid = function(keywords){
     var pid = 0;
     plist.some(function(line) {
         var isMatch = keywords.every(function(keyword){
-            if(keyword=="pub_server") keyword="deploy"; //临时兼容
+            //临时兼容
+            if(keyword=="deploy"){
+                return line.includes(keyword) || line.includes("pub_server");
+            }
             return line.includes(keyword);
         });
         if(isMatch) {
