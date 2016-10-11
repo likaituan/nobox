@@ -4,7 +4,7 @@ var {requireJson,cmd} = require("ifun");
 
 //获取配置信息
 exports.getConfig = function(args, ua) {
-    var configFile = `${args.dir}/${ua.engine.name}.config.js`;
+    var configFile = `${args.dir||ua.path}/${ua.engine.name}.config.js`;
     var config = requireJson(configFile);
     if (isFunction(config)) {
         config = config(args);

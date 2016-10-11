@@ -102,7 +102,6 @@ var Start = function(db){
     var httpx = port==443 ? https : http;
     global.httpx = httpx.createServer(Server).listen(port).on("error", Error);
     ops.startTip!="hide" && console.log(`Node Is Running At ${ops.ua.ip}:${port} Or localhost:${port}`);
-    log({ops});
     ops.open && cmd(`open http://localhost:${ops.port}`);
 };
 

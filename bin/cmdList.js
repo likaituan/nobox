@@ -51,13 +51,7 @@ var exp = {
 
     //重启
     restart: function(){
-        var args = getArgs("cmd", "port");
-        if(args.port){
-            cmd(`nobox stop ${args.port}`);
-        }else{
-            cmd("nobox stop");
-        }
-        cmd("nobox ");
+        log("waiting developer...");
     }
 };
 

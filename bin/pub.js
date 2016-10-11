@@ -6,7 +6,6 @@ var fs = require("fs");
 var path = require("path");
 var {log,end,cmd,getArgs} = require("ifun");
 var ex = require("./ex");
-var util = require("util");
 
 var args = {};
 var config = {};
@@ -14,14 +13,18 @@ var config = {};
 var pub;
 var mid;
 
-var localDir;
+var pubIndex = -1;
+var pubCount = 0;
 
-var pubIndex;
-var pubCount;
+var localDir;
+var cmdList;
+var tarFile;
+var sshArgs;
+var isShow;
 
 //cmd对外接口
 var cmdFun = function(cmdExp) {
-    exp.cmdList.push(cmdExp);
+    cmdList.push(cmdExp);
 };
 
 var getDate = function(){
@@ -33,8 +36,7 @@ var getDate = function(){
 
 //远程登录发版
 var loginPub = function(){
-    var sshKey = getSshKey(mid.key, pub.keyDir);
-    var isShow = args.show ? "--show" : "";
+    var sshKey = getSshKey(mid.key);
     var cmdExp = `ssh ${sshKey} ${mid.user}@${mid.ip} "nobox pub ${args.env} ${isShow} dir=${mid.gitDir}"`;
     log("now is login to publish machine, please wait a moment...");
     cmd(cmdExp, localDir, publishFinish);
@@ -44,12 +46,12 @@ var loginPub = function(){
 //上传前检查
 var chkPubBefore = function(){
     config.onPubBefore && !args.onlyPub && config.onPubBefore(cmdFun);
-    exp.cmdList.length>0 ? runCmd() : startPub();
+    cmdList.length>0 ? runCmd() : startPub();
 };
 
 //上传前循环执行命令
 var runCmd = function() {
-    var cmdExp = exp.cmdList.shift();
+    var cmdExp = cmdList.shift();
     if(cmdExp) {
         cmd(cmdExp, localDir, code => {
             if (code == 0) {
@@ -81,11 +83,12 @@ var getNodeDeps = function(currentFile, deps, isLoaded){
 
 //开始上传
 var startPub = function(){
-    pubIndex = 1;
-    pubCount = pub.ips.length;
+    pubIndex = 0;
+    pubCount = mid && mid.ips.length || pub.ips.length;
+
     var dir = args.dir || ".";//path.resolve("./");
-    exp.tarFile = `${dir}/bin.tar.gz`;
-    if(fs.existsSync(exp.tarFile)){
+    tarFile = `${dir}/bin.tar.gz`;
+    if(fs.existsSync(tarFile)){
         publishBegin();
     }else {
         pack();
@@ -109,7 +112,7 @@ var pack = function(){
             */
         }
         source = source.join(" ");
-        var cmdExp = `tar -zcf ${exp.tarFile} ${source}`;
+        var cmdExp = `tar -zcf ${tarFile} ${source}`;
         cmd(cmdExp, localDir, publishBegin);
     }else{
         log("source is empty");
@@ -117,11 +120,8 @@ var pack = function(){
 };
 
 //获取key
-var getSshKey = function(key, dir){
+var getSshKey = function(key){
     if(key){
-        if(dir){
-            key = `${dir}/${key}`;
-        }
         if (fs.existsSync(key)) {
             var mode = fs.statSync(key).mode.toString(8);
             if (/[40]{3}$/.test(mode)) {
@@ -136,10 +136,17 @@ var getSshKey = function(key, dir){
     return "";
 };
 
+//数字to第几
+var getTh = function(n){
+    return n + ([0,"st","nd","rd"][n]||"th");
+};
+
 //开始发版
 var publishBegin = function(){
+    args.show && log({pubIndex,pubCount,currentOption:mid?"local-mid":"mid-pro"});
     if(pubCount>1){
-        log(`now is publishing the ${pubIndex}`);
+        log(`\n===================================\n`);
+        log(`now is publishing the ${getTh(pubIndex+1)} machine:`);
     }
     uploadPackage();
 };
@@ -149,12 +156,12 @@ var uploadPackage = function() {
     log(`uploading...`);
 
     if(pub.isParallel) {
-        cmd(`cp ${exp.tarFile} ${pub.dir}/bin.tar.gz`, uploadPackageFinish);
+        cmd(`cp ${tarFile} ${pub.dir}/bin.tar.gz`, uploadPackageFinish);
     }else{
         var o = mid || pub;
         var ip = o.ips[pubIndex];
-        exp.sshArgs = getSshKey(o.key, o.keyDir);
-        var cmdExp = `scp ${exp.sshArgs} ${exp.tarFile} ${o.user}@${ip}:${o.dir}/bin.tar.gz`;
+        sshArgs = getSshKey(o.key);
+        var cmdExp = `scp ${sshArgs} ${tarFile} ${o.user}@${ip}:${o.dir}/bin.tar.gz`;
         cmd(cmdExp, localDir, uploadPackageFinish);
     }
 };
@@ -178,16 +185,17 @@ var publish = function(){
         cmdExp = `nohup nobox deploy user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         cmd(cmdExp, localDir, publishFinish);
     }else {
-        var ip = pub.ips[pubIndex];
         if (mid) {
-            var key = pub.key ? `pub.key=${pub.key}` : '';
-            cmdExp = `ssh ${exp.sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
-            cmdExp.push(`"nobox pub ${args.env} localDir=${mid.dir} ${key} pub.user=${pub.user} pub.ip=${ip} pub.port=${pub.port} pub.dir=${pub.dir}"`);
+            var ips = pub.ips.join(",");
+            var key = mid.key ? `pub.key=${pub.key}` : '';
+            cmdExp = `ssh ${sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
+            cmdExp.push(`"nobox pub ${args.env} ${isShow} dir=${mid.dir} ${key} pub.user=${pub.user} pub.ips=${ips} pub.port=${pub.port} pub.dir=${pub.dir}"`);
             cmd(cmdExp, localDir, publishFinish);
         } else {
+            var ip = pub.ips[pubIndex];
             date = getDate();
-            cmdExp = `ssh ${exp.sshArgs} ${pub.user}@${ip}`.split(/\s+/);
-            cmdExp.push(`"nohup nobox deploy port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
+            cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/);
+            cmdExp.push(`"nohup nobox deploy ${isShow} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
             cmd(cmdExp, localDir, publishFinish);
         }
     }
@@ -198,23 +206,23 @@ var publishFinish = function(code){
     if(code!=0){
         end("publish fail!");
     }
-    if(pubCount>1){
-        log(`the ${pubIndex} machine publish finish!`);
-    }
-    if(pubIndex < pubCount) {
+    if(pubCount>1) {
+        log(`the ${getTh(pubIndex+1)} machine publish finish!`);
         pubIndex++;
-        pubBegin();
-    }else{
-        cmd(`rm -rf ${exp.tarFile}`, localDir);
-        log("publish success!");
+        if (pubIndex < pubCount) {
+            return publishBegin();
+        }
     }
+    cmd(`rm -rf ${tarFile}`, localDir);
+    log("publish success!");
 };
 
 
 module.exports = function(ua) {
     args = getArgs("cmd", "env");
+    isShow = args.show ? "--show" : "";
 
-    exp.cmdList = [];
+    cmdList = [];
     localDir = args.dir  = args.dir || args.localDir || ua.path;
 
     if (!args.env) {
@@ -234,20 +242,21 @@ module.exports = function(ua) {
     pub.port = pub.port || pub.remotePort || config.port;
     pub.ip = pub.ip || pub.remoteIp;
     pub.dir = pub.dir || pub.remoteDir;
-    pub.ips = util.isArray(pub.ip) ? pub.ip : [pub.ip];
+    pub.ips = pub.ips || [pub.ip];
     if (!pub.dir) {
-        throw "please setting pub option 'remoteDir' before!";
+        throw "please setting option 'pub.dir' before!";
     }
-    if(pub.isParallel && !pub.ip){
-        throw "please setting pub option 'remoteIp' before!";
+    if(!pub.isParallel && !pub.ip && !pub.ips){
+        throw "please setting option 'pub.ip' before!";
     }
-    args.show && log({config});
-    if(pub.mid) {
-        mid = pub.mid;
+    mid = pub.mid;
+    if(mid) {
         mid.user = mid.user || "root";
+        mid.ips = mid.ips || [mid.ip];
         if(mid.gitDir){
             return loginPub();
         }
     }
+    args.show && log({config});
     chkPubBefore();
 };

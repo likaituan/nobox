@@ -28,7 +28,7 @@ module.exports = function(ua) {
 
     //step4 - run node
     args.cmd = "start";
-    args.path = dir;
-    start(args, ops);
+    args.dir = dir;
+    start(ua, args);
 
 };
