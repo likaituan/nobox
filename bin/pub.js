@@ -185,7 +185,7 @@ var publish = function(){
     } else {
         var time = getDateTime();
         var date = time.split("_");
-        cmdExp = `nohup nobox deploy ${isShow} user=${config.ua.user} time=${time} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        cmdExp = `nohup nobox deploy port=${pub.port} env=${args.env} time=${time} dir=${pub.dir} user=${config.ua.user} ${isShow} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         if(!pub.isParallel){
             var ip = pub.ips[pubIndex];
             cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
