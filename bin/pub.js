@@ -27,11 +27,9 @@ var cmdFun = function(cmdExp) {
     cmdList.push(cmdExp);
 };
 
-var getDate = function(){
+var getDateTime = function(){
     var timestamp = Date.now() - new Date().getTimezoneOffset()*60000;
-    //var date = new Date(timestamp).toISOString().replace(/T|\./g,"_").replace("Z","");
-    var date = new Date(timestamp).toISOString().split("T")[0].replace(/\D/g,"");
-    return date;
+    return new Date(timestamp).toISOString().replace(/:[^:]*$/,"").replace(/\W/g,"").replace("T","_");
 };
 
 //远程登录发版
@@ -179,26 +177,21 @@ var publish = function(){
     log(`publishing...`);
 
     var cmdExp;
-    var date;
-    if(pub.isParallel){
-        date = getDate();
-        cmdExp = `nohup nobox deploy ${isShow} user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
-        cmd(cmdExp, localDir, publishFinish);
-    }else {
-        if (mid) {
-            var ips = pub.ips.join(",");
-            var key = mid.key ? `pub.key=${pub.key}` : '';
-            cmdExp = `ssh ${sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/);
-            cmdExp.push(`"nobox pub ${args.env} ${isShow} dir=${mid.dir} ${key} pub.user=${pub.user} pub.ips=${ips} pub.port=${pub.port} pub.dir=${pub.dir}"`);
-            cmd(cmdExp, localDir, publishFinish);
-        } else {
+    if (mid) {
+        var key = mid.key ? `pub.key=${pub.key}` : '';
+        var ips = pub.ips.join(",");
+        cmdExp = `nobox pub ${args.env} ${isShow} dir=${mid.dir} ${key} pub.user=${pub.user} pub.ips=${ips} pub.port=${pub.port} pub.dir=${pub.dir}`;
+        cmdExp = `ssh ${sshArgs} ${mid.user}@${mid.ip}`.split(/\s+/).concat(`"${cmdExp}"`);
+    } else {
+        var time = getDateTime();
+        var date = time.split("_");
+        cmdExp = `nohup nobox deploy ${isShow} user=${config.ua.user} time=${time} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        if(!pub.isParallel){
             var ip = pub.ips[pubIndex];
-            date = getDate();
-            cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/);
-            cmdExp.push(`"nohup nobox deploy ${isShow} user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
-            cmd(cmdExp, localDir, publishFinish);
+            cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
         }
     }
+    cmd(cmdExp, localDir, publishFinish);
 };
 
 //发版完成
