@@ -182,7 +182,7 @@ var publish = function(){
     var date;
     if(pub.isParallel){
         date = getDate();
-        cmdExp = `nohup nobox deploy user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        cmdExp = `nohup nobox deploy ${isShow} user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         cmd(cmdExp, localDir, publishFinish);
     }else {
         if (mid) {
@@ -195,7 +195,7 @@ var publish = function(){
             var ip = pub.ips[pubIndex];
             date = getDate();
             cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/);
-            cmdExp.push(`"nohup nobox deploy ${isShow} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
+            cmdExp.push(`"nohup nobox deploy ${isShow} user=${config.ua.user} port=${pub.port} dir=${pub.dir} env=${args.env} > ${pub.dir}/logs/${date}.log 2>&1 &"`);
             cmd(cmdExp, localDir, publishFinish);
         }
     }
