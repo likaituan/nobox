@@ -7,8 +7,9 @@ var path = require("path");
 var {log,end,cmd,getArgs} = require("ifun");
 var ex = require("./ex");
 
-var args = {};
 var config = {};
+var args = {};
+var ua = {};
 
 var pub;
 var mid;
@@ -35,8 +36,8 @@ var getDateTime = function(){
 //远程登录发版
 var loginPub = function(){
     var sshKey = getSshKey(mid.key);
-    var cmdExp = `ssh ${sshKey} ${mid.user}@${mid.ip} "nobox pub ${args.env} ${isShow} dir=${mid.gitDir}"`;
-    log("now is login to publish machine, please wait a moment...");
+    var cmdExp = `ssh ${sshKey} ${mid.user}@${mid.ip} "nobox pub ${args.env} ${isShow} dir=${mid.gitDir} user=${ua.user}"`;
+    log("step1: local===>testPub");
     cmd(cmdExp, localDir, publishFinish);
 };
 
@@ -185,7 +186,7 @@ var publish = function(){
     } else {
         var time = getDateTime();
         var date = time.split("_")[0];
-        cmdExp = `nohup nobox deploy port=${pub.port} env=${args.env} dir=${pub.dir} time=${time} user=${config.ua.user} ${isShow} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        cmdExp = `nohup nobox deploy port=${pub.port} env=${args.env} dir=${pub.dir} time=${time} user=${args.user} ${isShow} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         if(!pub.isParallel){
             var ip = pub.ips[pubIndex];
             cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
@@ -211,7 +212,78 @@ var publishFinish = function(code){
 };
 
 
-module.exports = function(ua) {
+var getHost = function(item){
+    //remote+key为兼容旧版
+    item.user = item.user || item.remoteUser || "root";
+    item.port = item.port || item.remotePort;
+    item.ip = item.ip || item.remoteIp;
+    item.dir = item.dir || item.remoteDir;
+    item.ips = item.ips || [item.ip];
+    return item;
+};
+
+
+//分析每台机子的信息
+var parseHost = function(params, mids, env){
+    var item = getHost(env);
+    log({env,item});
+    if(item.gitDir){
+        params.push(`git=${env}`);
+    }
+    params.push(qs.stringify(item));
+    if(item.prev){
+        mids.push(item.prev);
+        parseHost(params, mids, item.prev);
+    }
+
+};
+
+
+var setParams = function(items, params){
+    for(let m in items){
+        let item = items[m];
+        for (let k in item) {
+            item[k] && typeof(item[k]) != "object" && params.push(`${m}.${k}=${item[k]}`);
+        }
+    }
+};
+
+//分析线路
+var parseLine = function(){
+    var params = [];
+    var items = {};
+    pub.start.rose = "git";
+    items[pub.start.env] = pub.start;
+    var current = args.current||"local";
+    if(current==pub.start.env){
+        pub.start.user = ua.user;
+    }
+    var item = pub.start;
+    for(let m in pub.mids){
+        item.next = m;
+        item = getHost(pub.mids[m]);
+        item.rose = "upload";
+        if(item.gitDir){
+            item.rose = "git";
+            for (let m2 in items) {
+                items[m2].rose = "login";
+            }
+        }
+        items[m] = item;
+    }
+    item.next = args.env;
+    items[args.env] = pub;
+    pub.rose = "deploy";
+    setParams(items, params);
+
+    params.push(`current=${current}`);
+    params.push(`start=${pub.start.env}`);
+    params.push(`end=${args.env}`);
+    log({params});
+};
+
+module.exports = function(_ua) {
+    ua = _ua;
     args = getArgs("cmd", "env");
     isShow = args.show ? "--show" : "";
 
@@ -221,6 +293,7 @@ module.exports = function(ua) {
     if (!args.env) {
         end("please select a environment before!");
     }
+
     try {
         args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", localDir);
     }catch(e){}
@@ -230,6 +303,10 @@ module.exports = function(ua) {
     if(!pub) {
         throw "please setting publish option 'pub' before!";
     }
+    return parseLine();
+
+
+
     //remote+key为兼容旧版
     pub.user = pub.user || pub.remoteUser || "root";
     pub.port = pub.port || pub.remotePort || config.port;
