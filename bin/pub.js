@@ -16,6 +16,7 @@ var mid;
 var pub;
 var next;
 var ips;
+var way;
 
 var local;  //本地参数
 var remote; //远程参数
@@ -42,9 +43,7 @@ var getDateTime = function(){
 var getParams = function(){
     var remote = [];
     if(mid){
-        log({next:src.next});
         delete mid[src.next];
-        log({mid});
         for(let m in mid){
             let item = mid[m];
             for (let k in item) {
@@ -60,20 +59,19 @@ var getParams = function(){
 
 
     if(next){
-        src = {
+        var _src = {
             puber: src.puber,
             dir: next.dir,
-            rose: next.rose,
-            //env: next.env
+            rose: next.rose
         };
         if(next.keyDir) {
-            src.keyDir = next.keyDir;
+            _src.keyDir = next.keyDir;
         }
     }
 
     var local = [];
-    for(let k in src){
-        src[k] && local.push(`${k}=${src[k]}`);
+    for(let k in _src){
+        src[k] && local.push(`${k}=${_src[k]}`);
     }
     local = local.join(" ");
 
@@ -120,7 +118,7 @@ var getNodeDeps = function(currentFile, deps, isLoaded){
 
 //开始上传
 var startPub = function(){
-    next = mid[src.next] || pub;
+    next = mid && mid[src.next] || pub;
     ips = next.ip.split(",");
     pubIndex = 0;
     pubCount = ips.length;
@@ -184,18 +182,19 @@ var getTh = function(n){
 
 //开始发版
 var publishBegin = function(){
-    args.show && log({pubIndex,pubCount,currentOption:mid?"local-mid":"mid-pro"});
+    way = `${src.env}->${next.env}:`;
+    args.show && log({pubIndex,pubCount});
     if(pubCount>1){
         log(`\n===================================\n`);
         log(`now is publishing the ${getTh(pubIndex+1)} machine:`);
     }
     sshArgs = getSshKey(next.key, src.keyDir);
-    uploadPackage();
+    src.rose=="login" ? publish(): uploadPackage();
 };
 
 //上传压缩包
 var uploadPackage = function() {
-    log(`uploading...`);
+    log(`${way} uploading...`);
 
     if(args.parallel) {
         cmd(`cp ${tarFile} ${pub.dir}/bin.tar.gz`, uploadPackageFinish);
@@ -209,38 +208,31 @@ var uploadPackage = function() {
 //上传压缩包完成
 var uploadPackageFinish = function(code) {
     if(code!=0){
-        end("upload fail!");
+        end(`${way} upload fail!`);
     }
+    log(`${way} upload success!`);
     publish();
-};
-
-//远程登录发版
-var login2pub = function(){
-    var sshKey = getSshKey(mid.key);
-    var cmdExp = `ssh ${sshKey} ${mid.user}@${mid.ip} "nobox pub ${args.env} ${isShow} dir=${mid.gitDir} user=${ua.user}"`;
-    log("step1: local===>testPub");
-    cmd(cmdExp, src.dir, publishFinish);
 };
 
 //发版
 var publish = function(){
-    log(`publishing...`);
-
     var cmdExp;
     var ip = ips[pubIndex];
-    if (mid) {
+    if (next.rose=="deploy") {
+        log(`${way} publishing...`);
+        var time = getDateTime();
+        var date = time.split("_")[0];
+        cmdExp = `nohup nobox deploy port=${pub.port} env=${args.env} dir=${pub.dir} time=${time} user=${src.puber} ${isShow} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        if(!pub.isParallel){
+            cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
+        }
+    }else{
+        log(`${way} logining...`);
         var key = mid.key ? `pub.key=${pub.key}` : '';
         var {local,remote} = getParams();
 
         cmdExp = `nobox pub ${args.env} ${isShow} ${key} ${local} ${remote}`;
         cmdExp = `ssh ${sshArgs} ${next.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
-    } else {
-        var time = getDateTime();
-        var date = time.split("_")[0];
-        cmdExp = `nohup nobox deploy port=${pub.port} env=${args.env} dir=${pub.dir} time=${time} user=${args.user} ${isShow} > ${pub.dir}/logs/${date}.log 2>&1 &`;
-        if(!pub.isParallel){
-            cmdExp = `ssh ${sshArgs} ${pub.user}@${ip}`.split(/\s+/).concat(`"${cmdExp}"`);
-        }
     }
     cmd(cmdExp, src.dir, publishFinish);
 };
@@ -248,7 +240,7 @@ var publish = function(){
 //发版完成
 var publishFinish = function(code){
     if(code!=0){
-        end("publish fail!");
+        end(`${way} publish fail!`);
     }
     if(pubCount>1) {
         log(`the ${getTh(pubIndex+1)} machine publish finish!`);
@@ -258,7 +250,7 @@ var publishFinish = function(code){
         }
     }
     cmd(`rm -rf ${tarFile}`, src.dir);
-    log("publish success!");
+    log(`${way} publish success!`);
 };
 
 //分析线路
@@ -271,7 +263,7 @@ var parseLine = function(){
     for(let m in mid){
         item.next = m;
         item = mid[m];
-        item.rose = "upload";
+        item.rose = item.rose || "upload";
         if(item.rose=="pack"){
             for (let m2 in items) {
                 items[m2].rose = "login";
@@ -281,9 +273,10 @@ var parseLine = function(){
     }
     item.next = args.env;
     pub.rose = "deploy";
+    pub.env = args.env;
     pub.src = null;
     pub.mid = null;
-    log({src,mid,pub});
+    args.show && log({src,mid,pub});
 };
 
 module.exports = function(_ua) {
@@ -296,17 +289,13 @@ module.exports = function(_ua) {
     if (!args.env) {
         end("please select a environment before!");
     }
-
-    try {
-        args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", src.dir);
-    }catch(e){}
-
     config = ex.getConfig(args, ua);
     pub = config.pub || args.pub;
     if(!pub) {
         throw "please setting publish option 'pub' before!";
     }
     parseLine();
+    args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", src.dir);
 
     if (!pub.dir) {
         throw "please setting option 'pub.dir' before!";
@@ -315,5 +304,5 @@ module.exports = function(_ua) {
         throw "please setting option 'pub.ip' before!";
     }
     args.show && log({config});
-    src.rose=="pack" ? chkPubBefore() : publishBegin();
+    src.rose=="pack" ? chkPubBefore() : startPub();
 };
