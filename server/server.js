@@ -95,7 +95,7 @@ var Start = function(db){
     if(db){
         remoteServer.db = db;
     }
-    var port = ops.args.port || 80;
+    var port = ops.args.port || ops.port || 80;
     staticServer.init(ops);
     remoteServer.init(ops.remote, ops.db);
     //binary.init(ops.binary);

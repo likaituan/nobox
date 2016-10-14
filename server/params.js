@@ -8,6 +8,15 @@ var qs = require("querystring");
 var url = require("url");
 var multipart =  require("./multipart");
 
+//字段过滤
+var parseFields = function(_fields){
+    var fields = {};
+    for (var k in _fields) {
+        fields[k] = typeof(_fields[k]) == "string" ? _fields[k].trim() : _fields[k];  //空格过滤
+    }
+    return fields;
+};
+
 //获取参数
 exports.getParams = function(req, callback){
     if(req.isMultipart){
@@ -16,7 +25,8 @@ exports.getParams = function(req, callback){
 
     var data = {};
     if(req.method == "GET"){
-        data.fields = url.parse(req.url,true).query;
+        var fields = url.parse(req.url,true).query;
+        data.fields = parseFields(fields);
         callback(data);
     }
     else if(req.method=="POST") {
@@ -26,10 +36,7 @@ exports.getParams = function(req, callback){
         });
         req.addListener("end", function () {
             var fields = qs.parse(postdata);
-            data.fields = {};
-            for (var k in fields) {
-                data.fields[k] = typeof(fields[k]) == "string" ? fields[k].trim() : fields[k];  //空格过滤
-            }
+            data.fields = parseFields(fields);
             callback(data);
         });
     }else{
