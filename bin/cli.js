@@ -8,7 +8,7 @@ var ua = {};
 ua.engine = {name,version};
 ua.ip = getIp();
 ua.path = process.cwd();
-ua.user = process.env.USER;
+ua.user = process.env.USER || process.env.USERNAME;
 ua.sudo = process.platform!="win32"&&ua.user!="root" ? "sudo " : "";
 ua.npm = process.platform=="win32" ? "npm.cmd" : "npm";
 

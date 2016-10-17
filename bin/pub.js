@@ -56,8 +56,9 @@ var getParams = function(){
 
 
     if(next){
-        var _src = {
+        var _start = {
             puber: start.puber,
+            time: start.time,
             dir: next.dir,
             rose: next.rose
         };
@@ -67,8 +68,8 @@ var getParams = function(){
     }
 
     var local = [];
-    for(let k in _src){
-        src[k] && local.push(`${k}=${_src[k]}`);
+    for(let k in _start){
+        _start[k] && local.push(`${k}=${_start[k]}`);
     }
     local = local.join(" ");
 
@@ -218,14 +219,13 @@ var publish = function(){
 
     if (next.rose=="deploy") {
         log(`${way} publishing...`);
-        var time = getDateTime();
-        var date = time.split("_")[0];
-        var params = `port=${pub.port} env=${args.env} dir=${pub.dir} time=${time} user=${start.puber} ${isShow}`;
-        deployCmdExp = `nohup nobox deploy ${params} > ${pub.dir}/logs/${date}.log 2>&1 &`;
+        var date = args.time.split("_")[0];
+        var params = `port=${pub.port} env=${args.env} dir=${pub.dir} time=${start.time} puber=${start.puber} ${isShow}`;
+        var deployCmdExp = `nohup nobox deploy ${params} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         if(args.parallel) {
             cmdExp = deployCmdExp;
         }else{
-            cmdExp.push(`"${cmdExp}"`);
+            cmdExp.push(`"${deployCmdExp}"`);
         }
     }else if(next.rose){
         log(`${way} logining...`);
@@ -255,9 +255,10 @@ var publishFinish = function(code){
 //分析线路
 var parseLine = function(){
     var items = {};
-    var item = src = items.src = pub.src || {};
+    var item = start = items.start = pub.start || {};
     start.rose = "pack";
-    start.puber = args.puber || ua.user;
+    start.puber = start.puber || args.puber || ua.user || ua.ip || "unknown";
+    start.time = args.time || getDateTime();
     mid = pub.mid;
     for(let m in mid){
         item.next = m;
@@ -273,9 +274,9 @@ var parseLine = function(){
     item.next = args.env;
     pub.rose = "deploy";
     pub.env = args.env;
-    pub.src = null;
+    pub.start = null;
     pub.mid = null;
-    args.show && log({src,mid,pub});
+    args.show && log({start,mid,pub});
 };
 
 module.exports = function(_ua) {
