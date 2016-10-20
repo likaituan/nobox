@@ -7,7 +7,7 @@ exports.getConfig = function(args, ua) {
     var configFile = `${args.dir||ua.path}/${ua.engine.name}.config.js`;
     var config = requireJson(configFile);
     if (isFunction(config)) {
-        config = config(args);
+        config = config(args,ua);
     }
     config.args = args;
     config.ua = ua;

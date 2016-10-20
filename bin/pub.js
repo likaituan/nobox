@@ -256,10 +256,12 @@ var publishFinish = function(code){
 var parseLine = function(){
     var items = {};
     var item = start = items.start = pub.start || {};
-    start.rose = "pack";
+    //start.env = start.env || args.env;  //because nobox pub test
+    start.rose = start.rose || args.rose || "pack";
+    start.keyDir = start.keyDir || args.keyDir;
     start.puber = start.puber || args.puber || ua.user || ua.ip || "unknown";
     start.time = args.time || getDateTime();
-    mid = pub.mid;
+    mid = pub.mid || args.mid;
     for(let m in mid){
         item.next = m;
         item = mid[m];
