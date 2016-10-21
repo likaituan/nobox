@@ -219,7 +219,7 @@ var publish = function(){
 
     if (next.rose=="deploy") {
         log(`${way} publishing...`);
-        var date = args.time.split("_")[0];
+        var date = start.time.split("_")[0];
         var params = `port=${pub.port} env=${args.env} dir=${pub.dir} time=${start.time} puber=${start.puber} ${isShow}`;
         var deployCmdExp = `nohup nobox deploy ${params} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         if(args.parallel) {
