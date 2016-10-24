@@ -117,7 +117,7 @@ var getNodeDeps = function(currentFile, deps, isLoaded){
 //开始上传
 var startPub = function(){
     next = mid && mid[start.next] || pub;
-    ips = next.ip.split(",");
+    ips = next.host.split(",");
     pubIndex = 0;
     pubCount = ips.length;
 
@@ -164,10 +164,10 @@ var getSshKey = function(key,dir){
             if (/[40]{3}$/.test(mode)) {
                 return `-i ${key}`;
             } else {
-                end(`the key file must locked, please use the "chmod" command to change mode!`)
+                end(`the key file must locked, please use the "chmod" command to change mode!`);
             }
         } else {
-            end(`the key path "${key}" is no exist!`)
+            end(`the key path "${key}" is no exist!`);
         }
     }
     return "";
@@ -302,8 +302,12 @@ module.exports = function(_ua) {
     if (!pub.dir) {
         throw "please setting option 'pub.dir' before!";
     }
-    if(!args.parallel && !pub.ip){
-        throw "please setting option 'pub.ip' before!";
+
+    if(!args.parallel){
+        pub.host = pub.ip || pub.domain;
+        if(!pub.host) {
+            throw "please setting option 'pub.ip or pub.domain' before!";
+        }
     }
     args.show && log({config});
     start.rose=="pack" ? chkPubBefore() : startPub();
