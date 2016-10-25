@@ -220,7 +220,8 @@ var publish = function(){
     if (next.rose=="deploy") {
         log(`${way} publishing...`);
         var date = start.time.split("_")[0];
-        var params = `port=${pub.port} env=${args.env} dir=${pub.dir} time=${start.time} puber=${start.puber} ${isShow}`;
+        var envStr = args.env ? `env=${args.env}` : '';
+        var params = `port=${pub.port} ${envStr} dir=${pub.dir} time=${start.time} puber=${start.puber}`;
         var deployCmdExp = `nohup nobox deploy ${params} > ${pub.dir}/logs/${date}.log 2>&1 &`;
         if(args.parallel) {
             cmdExp = deployCmdExp;
@@ -257,6 +258,8 @@ var parseLine = function(){
     var items = {};
     var item = start = items.start = pub.start || {};
     //start.env = start.env || args.env;  //because nobox pub test
+    start.env = start.env || "local";
+    start.dir = args.dir || "."; //用.而不是process.cwd()是怕window路径引起的问题
     start.rose = start.rose || args.rose || "pack";
     start.keyDir = start.keyDir || args.keyDir;
     start.puber = start.puber || args.puber || ua.user || ua.ip || "unknown";
@@ -273,11 +276,11 @@ var parseLine = function(){
         }
         items[m] = item;
     }
-    item.next = args.env;
+    pub.user = pub.user || "root";
     pub.rose = "deploy";
-    pub.env = args.env;
-    pub.start = null;
-    pub.mid = null;
+    pub.env = item.next = args.env || "remote";
+    delete pub.start;
+    delete pub.mid;
     args.show && log({start,mid,pub});
 };
 
@@ -288,9 +291,6 @@ module.exports = function(_ua) {
 
     cmdList = [];
 
-    if (!args.env) {
-        end("please select a environment before!");
-    }
     config = ex.getConfig(args, ua);
     pub = config.pub || args.pub;
     if(!pub) {
