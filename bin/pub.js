@@ -296,6 +296,11 @@ module.exports = function(_ua) {
     if(!pub) {
         throw "please setting publish option 'pub' before!";
     }
+    if(config.pub && args.pub) {
+        for (var k in args.pub) {
+            pub[k] = args[k];
+        }
+    }
     parseLine();
     args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", start.dir);
 
