@@ -298,7 +298,7 @@ module.exports = function(_ua) {
     }
     if(config.pub && args.pub) {
         for (var k in args.pub) {
-            pub[k] = args[k];
+            pub[k] = args.pub[k];
         }
     }
     parseLine();
