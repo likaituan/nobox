@@ -265,7 +265,7 @@ exports.send = function (ops, item, req, res) {
         path: PATH,
         method: ops.server.type,
         headers: {
-            //"Cookie": req.headers.cookie || "",
+            "Cookie": req.headers.cookie || "",
             "Content-Type": "application/"+contentType+"; charset=UTF-8"
             //,"Content-Length": data.replace(/[^\x00-\xff]/g,"aa").length
             //,"Content-Length": data.length
