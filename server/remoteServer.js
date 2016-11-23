@@ -6,7 +6,7 @@
 var fs = require("fs");
 var qs = require("querystring");
 var http = require("http");
-
+var https = req("https");
 var _params = require("./params");
 
 var ex = require("../core/ex");
@@ -15,6 +15,7 @@ var str = require("../core/string");
 var date = require("../core/date");
 var val = require("../validate/validate");
 var util = require("util");
+var nodeUrl = require("url");
 var {getClientIp,log} = require("ifun");
 
 var ops;
@@ -253,7 +254,7 @@ exports.send = function (ops, item, req, res) {
         "json": jsonData,
         "x-www-form-urlencoded": uriData
     })[contentType];
-
+    
     if(req.isMultipart){
         ops.query = JSON.stringify(ops.data.fields);
     }
@@ -271,7 +272,20 @@ exports.send = function (ops, item, req, res) {
             //,"Content-Length": data.length
         }
     };
-
+    if(/^https?:\/\//.test(ops.url)){
+        var urlJson = nodeUrl.parse(ops.url);
+        options.host = urlJson.hostname;
+        options.port = urlJson.port;
+        if(urlJson.port==null){
+            if(/^https:\/\//.test(ops.url)){
+                options.port = 443;
+            }else{
+                options.port = 80;
+            }
+        }
+        options.path = urlJson.path;
+        PATH = options.path;
+    }
     if(req.isMultipart){
         options.headers["Content-Type"] = req.headers["content-type"];
         options.headers["Content-Length"] = req.headers["content-length"];
@@ -289,7 +303,8 @@ exports.send = function (ops, item, req, res) {
         url.headers['Content-Length'] = byteLen;
     }
     */
-
+  
+    console.log("url=",options);
     for(var key in exports.session){
         options.headers[key] = exports.session[key] || "";
     }
@@ -325,8 +340,8 @@ exports.send = function (ops, item, req, res) {
 //发送到远程
 exports.send2remote = function(args, callback){
     var [options,ops,isMultipart] = args;
-
-    var req = http.request(options, function (res) {
+    var httpx = options.port==443 ? https : http;
+    var req = httpx.request(options, function (res) {
         res.setEncoding("utf8");
         log('STATUS: ' + res.statusCode);
         var body = "";
