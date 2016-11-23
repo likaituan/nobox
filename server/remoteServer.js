@@ -6,7 +6,7 @@
 var fs = require("fs");
 var qs = require("querystring");
 var http = require("http");
-var https = req("https");
+var https = require("https");
 var _params = require("./params");
 
 var ex = require("../core/ex");
