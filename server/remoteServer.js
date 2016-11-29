@@ -272,12 +272,12 @@ exports.send = function (ops, item, req, res) {
             //,"Content-Length": data.length
         }
     };
-    if(/^https?:\/\//.test(ops.url)){
-        var urlJson = nodeUrl.parse(ops.url);
+    if(/^https?:\/\//.test(ops.server.url)){
+        var urlJson = nodeUrl.parse(ops.server.url);
         options.host = urlJson.hostname;
         options.port = urlJson.port;
         if(urlJson.port==null){
-            if(/^https:\/\//.test(ops.url)){
+            if(/^https:\/\//.test(ops.server.url)){
                 options.port = 443;
             }else{
                 options.port = 80;

@@ -10,7 +10,7 @@ module.exports = {
     html: "text/html",
     css: "text/css",
     xml: "text/xml",
-    js: "text/js",
+    js: "text/utils",
     json: "text/json",
 
     gif: "image/gif",
