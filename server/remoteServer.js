@@ -16,7 +16,7 @@ var date = require("../core/date");
 var val = require("../validate/validate");
 var util = require("util");
 var nodeUrl = require("url");
-var {getClientIp} = require("ifun");
+var {getClientIp} = require("../../../ifun-lib/ifun/ip");
 
 var ops;
 var resHeaders;
@@ -136,6 +136,7 @@ exports.parse = function (req, res, item) {
                 exports.session[key] = v=="undefined" ? undefined : v;
             });
             exports.session.ip = exports.session.ip || getClientIp(req);
+
             /*
             if(item.type=="binary"){
                 fun({
