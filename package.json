@@ -1,37 +1,37 @@
 {
-    "name": "nobox",
-    "version": "2.3.2",
-    "main": "server/core.js",
-    "bin": {
-        "nobox": "./bin/cli.js"
-    },
-    "author": {
-        "name": "Li",
-        "email": "61114579@qq.com"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git@github.com:likaituan/nobox.git"
-    },
-    "license": "MIT",
-    "description": "nobox is a multifunctional node framework, integrated database and staic server and remote server and socket and form validate and other",
-    "keywords": [
-        "node",
-        "nobox",
-        "db",
-        "database",
-        "mongodb",
-        "server",
-        "http",
-        "https",
-        "gzip",
-        "socket",
-        "web socket",
-        "validate",
-        "form",
-        "framework"
-    ],
-    "dependencies": {
-        "ifun": "0.2.3"
-    }
+  "name": "nobox",
+  "version": "2.3.3",
+  "main": "server/core.js",
+  "bin": {
+    "nobox": "./bin/cli.js"
+  },
+  "author": {
+    "name": "Li",
+    "email": "61114579@qq.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:likaituan/nobox.git"
+  },
+  "license": "MIT",
+  "description": "nobox is a multifunctional node framework, integrated database and staic server and remote server and socket and form validate and other",
+  "keywords": [
+    "node",
+    "nobox",
+    "db",
+    "database",
+    "mongodb",
+    "server",
+    "http",
+    "https",
+    "gzip",
+    "socket",
+    "web socket",
+    "validate",
+    "form",
+    "framework"
+  ],
+  "dependencies": {
+    "ifun": "0.2.3"
+  }
 }
