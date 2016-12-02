@@ -1,6 +1,6 @@
 var fs = require("fs");
 var {isFunction} = require("util");
-var {requireJson,cmd} = require("ifun");
+var {requireJson,cmd,getCmd} = require("ifun");
 
 //获取配置信息
 exports.getConfig = function(args, ua) {
@@ -18,7 +18,7 @@ exports.getConfig = function(args, ua) {
 //如找不到pid返回0
 exports.getPid = function(keywords){
     var ps = process.platform=="linux" ? "ps -aux" : "ps aux";
-    var stdout = cmd(ps);
+    var stdout = getCmd(ps);
 
     var plist = stdout.split('\n');
     var pid = 0;
