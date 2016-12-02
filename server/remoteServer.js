@@ -16,7 +16,7 @@ var date = require("../core/date");
 var val = require("../validate/validate");
 var util = require("util");
 var nodeUrl = require("url");
-var {getClientIp,log} = require("ifun");
+var {getClientIp} = require("ifun");
 
 var ops;
 var resHeaders;
@@ -164,7 +164,7 @@ exports.parse = function (req, res, item) {
             */
 
             ops.data = data;
-            ops.server = fun(ops.data.fields, exports.session);
+            ops.server = fun(ops.data.fields, exports.session, req, res);
 
             if(item.type=="json") {
                 res.end(JSON.stringify({
@@ -196,8 +196,8 @@ exports.parse = function (req, res, item) {
                             }));
                         };
                         var doAction = function(){
-                            if(ops.action && ops.table && ops.data) {
-                                exports.db[ops.action](ops.table, ops.data, doRet);
+                            if(ops.server.action && ops.server.table && ops.server.data) {
+                                exports.db[ops.server.action](ops.server.table, ops.server.data, doRet);
                             }else{
                                 doRet({code:0});
                             }

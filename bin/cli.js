@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-var {log} = require("ifun");
+global.log = console.log;
+
 var {getIp} = require("../core/ex");
 var {name,version} = require("../package.json");
 

@@ -119,6 +119,7 @@
 
     //添加单个
     exp.addOne = function(tbName, params, callback) {
+        log({tbName,params});
         var tb = exp.db.collection(tbName);
         var newCallback = operateResult(callback);
         tb.insertOne(params, newCallback);
