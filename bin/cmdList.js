@@ -3,7 +3,7 @@
  * Created by likaituan on 16/7/21.
  */
 
-var {cmd,log,end,getArgs} = require("ifun");
+var {cmd,getCmd,log,end,getArgs} = require("ifun");
 
 var exp = {
     //更新
@@ -20,7 +20,7 @@ var exp = {
     //列出所有的nobox服务器
     list: function(){
         var ps = process.platform=="linux" ? "ps -aux" : "ps aux";
-        var serverList = cmd(ps).split("\n").filter(x=>x.includes("nobox")&&x.includes("deploy")&&x.includes(process.pid)===false);
+        var serverList = getCmd(ps).split("\n").filter(x=>x.includes("nobox")&&x.includes("deploy")&&x.includes(process.pid)===false);
         log(serverList.join("\n"));
         return serverList;
     },
