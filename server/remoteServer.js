@@ -16,7 +16,7 @@ var date = require("../core/date");
 var val = require("../validate/validate");
 var util = require("util");
 var nodeUrl = require("url");
-var {getClientIp} = require("../../../ifun-lib/ifun/ip");
+var {getClientIp} = require("ifun/ip");
 
 var ops;
 var resHeaders;
