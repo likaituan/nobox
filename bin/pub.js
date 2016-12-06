@@ -4,7 +4,7 @@
 
 var fs = require("fs");
 var path = require("path");
-var {log,end,cmd,getArgs} = require("ifun");
+var {log,end,cmd,getArgs,getCurrentBranch} = require("ifun");
 var ex = require("./ex");
 
 var config = {};
@@ -302,7 +302,7 @@ module.exports = function(_ua) {
         }
     }
     parseLine();
-    args.currentBranch = cmd("git rev-parse --abbrev-ref HEAD", start.dir);
+    args.currentBranch = getCurrentBranch(start.dir);
 
     if (!pub.dir) {
         throw "please setting option 'pub.dir' before!";
