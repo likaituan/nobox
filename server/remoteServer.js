@@ -16,6 +16,7 @@ var date = require("../core/date");
 var val = require("../validate/validate");
 var util = require("util");
 var nodeUrl = require("url");
+var {byteFormat} = require("ifun");
 var {getClientIp} = require("ifun/ip");
 
 var ops;
@@ -166,6 +167,21 @@ exports.parse = function (req, res, item) {
 
             ops.data = data;
             ops.server = fun(ops.data.fields, exports.session, req, res);
+
+            //新加,限制上传文件的大小
+            if(req.isMultipart && ops.server.options && ops.server.options.limit){
+                for(var ii in ops.data.files) {
+                    let oo = ops.data.files[ii];
+                    if(oo.byte>ops.server.options.limit) {
+                        res.end(JSON.stringify({
+                            success: false,
+                            code: -3,
+                            message: byteFormat(ops.server.options.limit)
+                        }));
+                        return;
+                    }
+                }
+            }
 
             if(item.type=="json") {
                 res.end(JSON.stringify({
