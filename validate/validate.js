@@ -72,7 +72,7 @@
                  */
                 if (val == ""){
                     if(chkItems.allow_empty){
-                        return true;
+                        continue;
                     }
                     if(chkItems.chk_empty !== false) {
                         return [key, str.format(chkItems.empty_title || exp.tip.empty, title)];
