@@ -70,8 +70,13 @@
                  return str.format(chkItems.empty||exp.tip.empty, title);
                  }
                  */
-                if (val == "" && chkItems.chk_empty !== false) {
-                    return [key, str.format(chkItems.empty_title || exp.tip.empty, title)];
+                if (val == ""){
+                    if(chkItems.allow_empty){
+                        return true;
+                    }
+                    if(chkItems.chk_empty !== false) {
+                        return [key, str.format(chkItems.empty_title || exp.tip.empty, title)];
+                    }
                 }
                 for (var k in chkItems) {
                     var v = exp.chkItem(title, val, k, chkItems[k], chkItems, params);
