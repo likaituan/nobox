@@ -98,6 +98,8 @@
      * @returns {message|true}
      */
     exp.chkItem = function(title, val, key, n, o, params){
+        log({title, val, key, n, o, params});
+
         var tip = exp.tip;
         //格式
         if(key=="number" && re.number.test(val)===false){
@@ -193,8 +195,8 @@
         }
 
         //是否一致
-        if(key=="diff" && val!=params[o.diff]){
-            return tip.diff;
+        if(key=="diff" && val==params[o.diff]){
+            return str.format(tip.diff, title);
         }
 
         return true;

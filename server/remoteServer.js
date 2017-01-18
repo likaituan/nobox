@@ -271,7 +271,8 @@ exports.send = function (ops, item, req, res) {
         "json": jsonData,
         "x-www-form-urlencoded": uriData
     })[contentType];
-    
+    log({server:ops.server,query:ops.query});
+
     if(req.isMultipart){
         ops.query = JSON.stringify(ops.data.fields);
     }
@@ -328,10 +329,11 @@ exports.send = function (ops, item, req, res) {
 
     if (ops.server.type.toLowerCase() == "get") {
         //url = "http://" + options.host + ":" + options.port + options.path;
-        options.path += "?" + uriData;
+        options.path += "?" + ops.query;
         ops.query = "";
         options.headers["Content-Length"] = 0;
     }
+
     log("\n=============== Service Info ================");
     log("TIME: "+date.now());
     log("TYPE: " + ops.server.type);
