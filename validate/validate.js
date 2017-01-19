@@ -195,6 +195,11 @@
         }
 
         //是否一致
+        if(key=="same" && val!=params[o.same]){
+            return str.format(tip.same, title);
+        }
+
+        //是否不重复
         if(key=="diff" && val==params[o.diff]){
             return str.format(tip.diff, title);
         }
