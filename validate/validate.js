@@ -98,7 +98,7 @@
      * @returns {message|true}
      */
     exp.chkItem = function(title, val, key, n, o, params){
-        log({title, val, key, n, o, params});
+        //log({title, val, key, n, o, params});
 
         var tip = exp.tip;
         //格式

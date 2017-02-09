@@ -81,7 +81,7 @@ var Server = function (req, res) {
         return;
     }
 
-    var [server, item] = route.parse(req,[remoteServer, binary, staticServer]);
+    var [server, item] = route.parse(req,[remoteServer, staticServer]);
     if(server){
         server.parse(req, res, item);
     }else{

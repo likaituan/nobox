@@ -29,34 +29,29 @@ var Error = function(err){
     err && err.stack && log(err.stack);
 };
 
-exports.items = {};
-exports.serviceList = {};
+exports.items = [];
 
 //初始化
 exports.init = function (config, db) {
     config = config || {};
-    config.items = config.items || [config];
+    var items = config.items || [config];
     if(db){
         db.type = "mongodb";
-        config.items.push(db);
+        items.push(db);
     }
-    config.items.forEach(function (item) {
+    items.forEach( item=>{
         for (var k in config) {
-            if (k !== "items" && item[k] === undefined) {
+            if (k !== "items" && item.hasOwnProperty(k)===false) {
                 item[k] = config[k];
             }
         }
         if(item.path) {
-            exports.items[item.path] = item;
-        }
-    });
+            item.validate = config.validate || {};
 
-    //添加到映射表
-    for(var p in exports.items) {
-        var item = exports.items[p];
-        if(item.validate){
             if(!item.validate.rule) {
-                item.validate = {rule: item.validate};
+                item.validate = {
+                    rule: item.validate
+                };
             }
             if(item.validate.lang) {
                 if(item.validate.langFile){
@@ -65,20 +60,21 @@ exports.init = function (config, db) {
                     val.tip = val.tips[item.validate.lang];
                 }
             }
-        }else{
-            item.validate = {};
-        }
 
-        if (item.dir) {
-            var o = exports.serviceList[p] = {};
-            fs.readdirSync(item.dir).forEach(function(fileName){
-                var key = fileName.split(".")[0];
-                o[key] = require(item.dir + key);
-            });
-        } else if (item.file) {
-            exports.serviceList[p] = item.file;
+            if (item.dir) {
+                item.serviceList = [];
+                fs.readdirSync(item.dir).forEach(fileName=>{
+                    var key = fileName.split(".")[0];
+                    var service = require(item.dir + key);
+                    item.serviceList.push(service);
+                });
+            } else if (item.file) {
+                item.serviceList = item.file;
+            }
+            this.items.push(item);
         }
-    }
+    });
+
 };
 
 //转发远程
@@ -109,24 +105,23 @@ exports.parse = function (req, res, item) {
     var re = new RegExp("^"+item.path,"i");
     //var url = req.url.replace(re, "").split("/");
     var url = req.url.replace(re, "").replace(/\?.*$/,"").split("/");
-    var serviceList = exports.serviceList[item.path];
     var file = item.dir ? url.shift() : null;
     var method = url.join("/");
     (function () {
         var fun;
         if(item.dir){
-            fun = serviceList[file];
+            fun = item.serviceList[file];
             if(typeof(fun)!="object"){
-                log("service [ "+file+" ] 文件不存在");
+                log(`service [ ${file} ] file no exist!`);
                 res.end('{"code":500}');
                 return;
             }
             fun = fun[method];
         }else if(item.file){
-            fun = serviceList[method];
+            fun = item.serviceList[method];
         }
         if(typeof(fun)!="function"){
-            log("service [ "+method+" ] 方法不存在");
+            log(`service [ ${method} ] method no exist!`);
             res.end('{"code":500}');
             return;
         }
@@ -271,7 +266,7 @@ exports.send = function (ops, item, req, res) {
         "json": jsonData,
         "x-www-form-urlencoded": uriData
     })[contentType];
-    log({server:ops.server,query:ops.query});
+    //log({server:ops.server,query:ops.query});
 
     if(req.isMultipart){
         ops.query = JSON.stringify(ops.data.fields);
@@ -322,7 +317,7 @@ exports.send = function (ops, item, req, res) {
     }
     */
   
-    console.log("url=",options);
+    //console.log("url=",options);
     for(var key in exports.session){
         options.headers[key] = exports.session[key] || "";
     }

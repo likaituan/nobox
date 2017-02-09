@@ -8,16 +8,16 @@
     //路由解析
     exports.parse = function(req, parsers) {
         var uri = url.parse(req.url);
-        var p,item;
         for(var parser of parsers){
             if(parser) {
-
-                for (p in parser.items) {
-                    item = parser.items[p];
-                    if (uri.path.indexOf(p) == 0) {
+                for (var item of parser.items) {
+                    if(typeof(item.path)=="object" && item.path.test(uri.path)){
                         return [parser, item];
                     }
-                    if (uri.path + "/" == p) {
+                    if (uri.path.indexOf(item.path) == 0) {
+                        return [parser, item];
+                    }
+                    if (uri.path + "/" == item.path) {
                         return [parser, item];
                     }
                 }

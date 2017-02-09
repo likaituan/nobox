@@ -11,11 +11,8 @@
     var pk = require("../package.json");
     var zlib = require('zlib');
 
-    exp.items = {};
-    exp.dir = "/";          //静态目录
-	exp.path = "/";         //静态路由
+    exp.items = [];
 	exp.model = null;       //模型
-    exp.htmlList = {};
     var ops;
 
     //初始化
@@ -28,41 +25,28 @@
                 dir: config
             };
         }
-        config.items = config.items || [config];
-        if(ops.seekjs){
-            config.items.push({
-                path: "/seekjs/",
-                dir: ops.seekjs
-            });
-        }
-        config.items.forEach(function (item) {
+        (config.items || [config]).forEach(function (item) {
+            //先赋值公用属性
             for (var k in config) {
-                if (k !== "items" && item[k] === undefined) {
+                if (k !== "items" && item.hasOwnProperty(k)===false) {
                     item[k] = config[k];
                 }
             }
-            item.dir = (item.dir||"").replace(/\/$/,"");
             item.path = item.path || "/";
-            exp.items[item.path] = item;
-        });
-
-
-        for(var p in exp.items) {
-            var item = exp.items[p];
+            item.dir = (item.dir||"").replace(/\/$/,"");
             if (item.file) {
-                exp.htmlList[p] = fs.readFileSync(item.file);
+                item.code = fs.readFileSync(item.file).toString();
             }
-            exp.items[p] = item;
-        }
+            exp.items.push(item);
+        });
     };
 
 	//未做缓存
     exp.parse = function (Req, Res,item) {
         //单文件匹配(缓存)
-        var code = exp.htmlList[item.path];
-        if(code){
+        if(item.code){
             Res.writeHead(200, {'Content-Type': 'text/html'});
-            Res.end(code);
+            Res.end(item.code);
             return;
         }
 
