@@ -159,6 +159,7 @@ var getSshKey = function(key,dir){
         if(dir){
             key = `${dir}/${key}`;
         }
+        log({key});
         if (fs.existsSync(key)) {
             var mode = fs.statSync(key).mode.toString(8);
             if (/[40]{3}$/.test(mode)) {
@@ -186,6 +187,7 @@ var publishBegin = function(){
         log(`\n===================================\n`);
         log(`now is publishing the ${getTh(pubIndex+1)} machine:`);
     }
+    log({start,next})
     sshArgs = getSshKey(next.key, start.keyDir);
     start.rose=="login" ? publish(): uploadPackage();
 };

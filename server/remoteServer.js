@@ -162,6 +162,9 @@ exports.parse = function (req, res, item) {
 
             ops.data = data;
             ops.server = fun(ops.data.fields, exports.session, req, res);
+            if(!ops.server){  //自由返回 不做表单验证等
+                return;
+            }
 
             //新加,限制上传文件的大小
             if(req.isMultipart && ops.server.options && ops.server.options.limit){
