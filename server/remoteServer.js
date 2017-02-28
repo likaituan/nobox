@@ -327,7 +327,7 @@ exports.send = function (ops, item, req, res) {
 
     if (ops.server.type.toLowerCase() == "get") {
         //url = "http://" + options.host + ":" + options.port + options.path;
-        options.path += "?" + ops.query;
+        options.path += "?" + uriData;
         ops.query = "";
         options.headers["Content-Length"] = 0;
     }
