@@ -400,7 +400,7 @@ exports.parseResult = function (body,res,item,ops) {
         return;
     }
     if(item.getResult){
-        jsonObj = item.getResult(jsonObj);
+        jsonObj = item.getResult(jsonObj, res);
     }
     if(ops.res){
         jsonObj = ops.res(jsonObj);
